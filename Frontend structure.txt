@@ -1,0 +1,33 @@
+app/____
+	|
+	|
+	|
+	AuthentificationPage (everyone can access, we can signup or login)
+	|
+	|
+	|
+	AllProductsView____ (Everyone can access)
+	|	           |
+	|	           ProductsManaging (Admin only can access)
+	|
+	|
+	|
+	|
+	PlanNewOrder (Employee/Admin only)
+        |
+	|
+	|
+	Orders view/managing (Employee/Admin only)
+	|
+	|
+	|
+	Stats/Dashboard (Admin only)
+	|
+	|
+	|
+	ClientsManaging (Employee and Admin only)
+	|
+	|
+	|
+	
+	

@@ -1,0 +1,39 @@
+ 1. Gestion des commandes
+Créer une nouvelle commande (nom du client, produits, quantités, date de livraison).OK
+
+Modifier / supprimer une commande. OK
+
+Visualiser toutes les commandes du jour.OK
+ 
+Marquer une commande comme "préparée", "en cours", ou "livrée".OK
+
+🧁 2. Catalogue de produits
+Ajouter / modifier / supprimer des produits (ex : croissants, pains au chocolat, muffins...).OK
+
+Gérer les prix et la disponibilité (par jour ? par saison ?).OK ~~
+
+👥 3. Gestion des clients
+Ajouter un client avec ses infos (nom, téléphone, préférences).OK
+
+Historique des commandes par client.OK
+
+📆 4. Vue calendrier / planification
+Voir les commandes planifiées par jour.ok	
+
+Filtrer par client, produit, ou statut.OK
+
+📊 5. Tableau de bord / stats
+Nombre de commandes par jour/semaine.OK (nombre de commandes entre deux périodes sur le backend)
+
+Produits les plus commandés.OK
+
+Totaux des ventes par jour.OK (nombre du chiffre d'affaire entre deux périodes, qu'on pourra ajuster sur le frontend plus tard).
+
+🔐 6. Authentification (optionnel)
+Connexion pour les employés ou responsables. OK
+
+Rôles : admin (gère tout), employé (gère commandes uniquement). TODO
+
+📱 7. Version mobile-friendly (optionnel)
+Interface adaptée pour téléphone pour consultation rapide des commandes.
+
