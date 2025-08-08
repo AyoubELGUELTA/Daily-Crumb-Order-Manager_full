@@ -2,7 +2,7 @@ import { useState } from 'react';
 import AuthLoginForm from '../components/users/AuthLoginForm';
 import AuthSignupForm from '../components/users/AuthSignupForm';
 // import TimedParagraph from '../components/users/utilities/TimedParagraph';
-const AuthPageLogin = () => {
+const AuthPage = () => {
 
     const [signupStatus, setSignupStatus] = useState({
         isPosted: false,
@@ -47,16 +47,21 @@ const AuthPageLogin = () => {
                 }
             }
         )
-            .then(response => {
-                // You should handle the response here
+            .then(async response => {
+                // Le corps de la réponse doit être lu, peu importe le statut.
+                // On utilise "async/await" à l'intérieur du "then" pour plus de clarté.
+                const data = await response.json();
+
                 if (!response.ok) {
-                    // Handle error responses, e.g., show an error message to the user
-                    throw new Error('Signup failed');
+                    // Si la réponse n'est pas OK, on lance une erreur
+                    // en incluant le message du backend
+                    throw new Error(data.message || "Une erreur est survenue.");
                 }
-                return response.json(); // Parse the JSON response
+
+                // Si tout est OK, on retourne les données pour le prochain "then"
+                return data;
             })
             .then(data => {
-                // Handle successful login data, e.g., store the auth token
                 console.log('The signup has been successfully done:', data);
                 setSignupStatus({
                     isPosted: true,
@@ -104,4 +109,4 @@ const AuthPageLogin = () => {
 
 };
 
-export default AuthPageLogin;
+export default AuthPage;

@@ -87,11 +87,11 @@ exports.user_signup = async (req, res, next) => {
 
             if (emailSent) {
                 return res.status(201).json({
-                    message: 'Inscription réussie. Veuillez vérifier votre e-mail pour activer votre compte.'
+                    message: 'Signup was successul. Please, verify your email to get access to your new account.'
                 });
             } else {
                 return res.status(500).json({
-                    message: 'Inscription réussie, mais échec de l\'envoi de l\'e-mail de vérification.'
+                    message: 'Signup was successul, but error occured while sending the mail verification to activate your account..'
                 });
             }
 
