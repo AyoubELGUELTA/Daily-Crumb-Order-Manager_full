@@ -55,6 +55,7 @@ const AuthPage = () => {
                 if (!response.ok) {
                     // Si la réponse n'est pas OK, on lance une erreur
                     // en incluant le message du backend
+                    console.log(data, response);
                     throw new Error(data.message || "Une erreur est survenue.");
                 }
 
@@ -92,7 +93,9 @@ const AuthPage = () => {
             <AuthLoginForm loginHandler={loginHandler} />
             <AuthSignupForm signupHandler={signupHandler} />
 
+
             {signupStatus.isPosted && (
+
                 <div onClick={handleOverlayClick}
                     className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
                 >
@@ -100,7 +103,9 @@ const AuthPage = () => {
 
                         <p className="text-xl font-bold mb-4">{signupStatus.message}</p>
                     </div>
+
                 </div>
+
             )}
         </div>
 

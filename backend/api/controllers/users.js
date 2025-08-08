@@ -73,8 +73,7 @@ exports.user_signup = async (req, res, next) => {
                     data: {
                         password: hash,
                         name: name || "Unknown",
-                        role: role,
-                        keyRole: keyRole
+                        role: role
                     }
                 })
             }
@@ -141,7 +140,10 @@ exports.user_verifyEmail = async (req, res, next) => {
                 { expiresIn: "2h" }
             );
 
-            return res.status(200).json({ message: "Email was successfully verified", sessionToken })
+            return res.status(200).json({
+                message: "Email was successfully verified",
+                token: sessionToken
+            })
         }
 
 

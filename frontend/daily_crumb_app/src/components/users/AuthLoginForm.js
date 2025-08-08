@@ -41,7 +41,10 @@ const AuthLoginForm = (props) => {
         <form onSubmit={submitHandler} className="bg-white p-8 rounded-lg shadow-xl max-w-sm mx-auto mt-10">
             <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Login</h2>
             <div className="mb-4">
-                <label htmlFor='email' className="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                <label htmlFor='email'
+                    className="block text-gray-700 text-sm font-bold mb-2">
+                    Email
+                </label>
                 <input
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     type='email'
@@ -53,7 +56,10 @@ const AuthLoginForm = (props) => {
                 />
             </div>
             <div className="mb-6">
-                <label htmlFor='password' className="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                <label htmlFor='password'
+                    className="block text-gray-700 text-sm font-bold mb-2">
+                    Password
+                </label>
                 <div className="relative">
                     <input
                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
