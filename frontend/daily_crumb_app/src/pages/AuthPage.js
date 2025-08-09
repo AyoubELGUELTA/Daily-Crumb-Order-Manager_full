@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import AuthLoginForm from '../components/users/AuthLoginForm';
 import AuthSignupForm from '../components/users/AuthSignupForm';
+
 // import TimedParagraph from '../components/users/utilities/TimedParagraph';
 const AuthPage = () => {
 
@@ -9,7 +10,11 @@ const AuthPage = () => {
         message: null
     });
 
+
+    const [isLoading, setIsLoading] = useState(false)
+    const [loadingAttemptMessage, setLoadingAttemptMessage] = useState('');
     const loginHandler = (loginData) => {
+        setIsLoading(true);
         fetch(`/users/login`,
             {
                 method: 'POST',
@@ -19,25 +24,40 @@ const AuthPage = () => {
                 }
             }
         )
-            .then(response => {
-                // You should handle the response here
+            .then(async response => {
+                // Le corps de la réponse doit être lu, peu importe le statut.
+                // On utilise "async/await" à l'intérieur du "then" pour plus de clarté.
+                const data = await response.json();
+
                 if (!response.ok) {
-                    // Handle error responses, e.g., show an error message to the user
-                    throw new Error('Login failed');
+                    // Si la réponse n'est pas OK, on lance une erreur
+                    // en incluant le message du backend
+                    console.log(data, response);
+                    throw new Error(data.message || "Une erreur est survenue.");
                 }
-                return response.json(); // Parse the JSON response
+
+                // Si tout est OK, on retourne les données pour le prochain "then"
+                return data;
             })
             .then(data => {
                 // Handle successful login data, e.g., store the auth token
                 console.log('Login successful:', data);
+                setLoadingAttemptMessage(data.message) //##### ICI IL FAUDRA RENVOYER VERS LA PAGE D'ACCUEIL AUTOMATIQUEMENT
+
             })
             .catch(error => {
                 // Handle network errors or errors from the server
                 console.error('Error during login:', error);
+                setLoadingAttemptMessage(error.message)
+
+            })
+            .finally(() => {
+                setIsLoading(false);
             });
     };
 
     const signupHandler = (signupData) => {
+        setIsLoading(true);
         fetch(`/users/signup`,
             {
                 method: 'POST',
@@ -76,6 +96,8 @@ const AuthPage = () => {
                     isPosted: true,
                     message: error.message || "Error while data was submitted, please try again."
                 });
+            }).finally(() => {
+                setIsLoading(false);
             });
     }
 
@@ -85,6 +107,7 @@ const AuthPage = () => {
             isSuccess: false,
             message: null
         });
+        setLoadingAttemptMessage('');
     };
 
 
@@ -94,6 +117,15 @@ const AuthPage = () => {
             <AuthSignupForm signupHandler={signupHandler} />
 
 
+            {isLoading &&
+
+                <div className="fixed inset-0 flex items-center justify-center z-[90]">
+
+                    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm"></div>
+
+                    <span className='loading loading-infinity loading-xl z-[100]'></span>
+
+                </div>}
             {signupStatus.isPosted && (
 
                 <div onClick={handleOverlayClick}
@@ -107,11 +139,25 @@ const AuthPage = () => {
                 </div>
 
             )}
+            {loadingAttemptMessage && (
+
+                <div onClick={handleOverlayClick}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                >
+                    <div className="bg-white p-8 rounded-lg shadow-xl text-center">
+
+                        <p className="text-xl font-bold mb-4">{loadingAttemptMessage}</p>
+                    </div>
+
+                </div>
+
+            )}
         </div>
 
 
     );
 
 };
+
 
 export default AuthPage;

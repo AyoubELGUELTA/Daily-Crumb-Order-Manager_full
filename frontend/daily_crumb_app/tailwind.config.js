@@ -6,5 +6,5 @@ module.exports = {
   theme: {
     extend: {},
   },
-  plugins: [require('flyonui'),],
-}
+  plugins: [require("daisyui")],
+};

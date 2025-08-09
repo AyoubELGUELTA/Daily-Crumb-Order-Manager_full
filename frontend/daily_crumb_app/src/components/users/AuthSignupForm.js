@@ -12,8 +12,9 @@ const AuthSignupForm = (props) => {
 
     })
 
-
-
+    const handlePaste = (e) => {
+        e.preventDefault();
+    };
 
 
 
@@ -124,6 +125,7 @@ const AuthSignupForm = (props) => {
                         name='confirmPassword'
                         value={enteredFormData.confirmPassword}
                         onChange={changeHandler}
+                        onPaste={handlePaste}
                     />
                 </div>
             </div>

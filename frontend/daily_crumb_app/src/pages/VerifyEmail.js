@@ -5,14 +5,14 @@ import { useState, useEffect } from 'react';
 const VerifyEmail = ({ onVerificationSuccess }) => {
     const [isLoading, setIsLoading] = useState(false)
     const [backendResp, setBackendResp] = useState('');
+    const [isVerifyingSuccessful, setIsVerifyingSuccessful] = useState(false);
     const urlParams = new URLSearchParams(window.location.search);
-
     const token = urlParams.get('token');
     useEffect(() => {
 
 
         const emailVerifyingHandler = async () => {
-
+            setIsVerifyingSuccessful(false);
             setIsLoading(true);
 
             if (!token) {
@@ -47,7 +47,7 @@ const VerifyEmail = ({ onVerificationSuccess }) => {
                 if (onVerificationSuccess) {
                     onVerificationSuccess(sessionToken);
                 }
-
+                setIsVerifyingSuccessful(true);
                 setBackendResp(data.message);
 
 
@@ -55,7 +55,8 @@ const VerifyEmail = ({ onVerificationSuccess }) => {
             }
             catch (error) {
                 console.error('Error during verification:', error);
-                setBackendResp(error);
+                setIsVerifyingSuccessful(false);
+                setBackendResp(error.message || "Error not identified occured.");
             }
             finally {
                 setIsLoading(false);
@@ -80,12 +81,34 @@ const VerifyEmail = ({ onVerificationSuccess }) => {
 
                         <div className="fixed inset-0 bg-white/50 backdrop-blur-sm"></div>
 
-                        <span className='loading loading-infinity loading-lg z-[100]'></span>
+                        <span className='loading loading-infinity loading-xl z-[100]'></span>
 
                     </div>}
+
+
+
+            {(!isLoading && isVerifyingSuccessful) &&
+                <div>
+                    <button className='btn btn-primary btn-block'>
+                        Home Page, let's cook!
+                    </button>
+
+                </div>}
+
+
 
         </div >
     );
 };
 
 export default VerifyEmail;
+
+
+
+
+
+
+
+
+
+

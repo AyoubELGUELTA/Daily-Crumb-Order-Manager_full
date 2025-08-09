@@ -15,7 +15,7 @@ function App() {
       <Routes>
         <Route path="/products" element={<Products />} />
         <Route path="/authentification" element={<AuthPage />} />
-        <Route path="verifyEmail" element={<VerifyEmail onVerificationSuccess={onVerificationEmailSuccess} />} />
+        <Route path="/verifyEmail" element={<VerifyEmail onVerificationSuccess={onVerificationEmailSuccess} />} />
       </Routes>
     </div>
   );
