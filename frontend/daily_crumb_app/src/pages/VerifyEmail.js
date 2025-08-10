@@ -1,13 +1,26 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 
 
 
 const VerifyEmail = ({ onVerificationSuccess }) => {
-    const [isLoading, setIsLoading] = useState(false)
+    const navigate = useNavigate();
+
+    const [isLoading, setIsLoading] = useState(false);
+
     const [backendResp, setBackendResp] = useState('');
+
     const [isVerifyingSuccessful, setIsVerifyingSuccessful] = useState(false);
+
     const urlParams = new URLSearchParams(window.location.search);
+
     const token = urlParams.get('token');
+
+    const [goToHomeButton, setGoToHomeButton] = useState({
+        span: '',
+        text: 'Click here to start cooking!'
+
+    });
     useEffect(() => {
 
 
@@ -65,6 +78,24 @@ const VerifyEmail = ({ onVerificationSuccess }) => {
         emailVerifyingHandler();
     }, [token, onVerificationSuccess]);
 
+    const handleOnClick = () => {
+        setGoToHomeButton(prev => ({
+            ...prev,
+            text: 'Loading'
+        }));
+        setGoToHomeButton(prev => ({
+            ...prev,
+            span: 'loading loading-infinity'
+        }));
+
+        setTimeout(() => {
+            navigate("/homeCooking");
+        }, 1000);
+
+
+
+    }
+
 
     return (
 
@@ -89,10 +120,24 @@ const VerifyEmail = ({ onVerificationSuccess }) => {
 
             {(!isLoading && isVerifyingSuccessful) &&
                 <div>
-                    <button className='btn btn-primary btn-block'>
-                        Home Page, let's cook!
-                    </button>
+                    {!goToHomeButton.span ?
 
+
+                        <div className="flex items-center justify-center h-screen">
+                            <button onClick={handleOnClick} className="btn btn-wide btn-neutral btn-outline">
+                                {goToHomeButton.text}
+
+                            </button>
+                        </div>
+                        :
+                        <div className="flex items-center justify-center h-screen">
+                            <button className="btn btn-wide btn-neutral btn-outline">
+                                {goToHomeButton.text}
+                                <span className="loading loading-infinity loading-xl"></span>
+                            </button>
+                        </div>
+
+                    }
                 </div>}
 
 
