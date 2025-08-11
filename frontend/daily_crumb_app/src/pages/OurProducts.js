@@ -1,6 +1,6 @@
 import { Spinner } from 'flowbite-react';
 
-const Products = () => {
+const OurProducts = () => {
     return (
         <section>
             <h1 className='text-center text-4xl'>
@@ -25,4 +25,4 @@ const Products = () => {
 };
 
 
-export default Products;
+export default OurProducts;

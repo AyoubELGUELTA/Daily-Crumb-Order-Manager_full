@@ -30,8 +30,29 @@ exports.create_new_client = async (req, res, next) => {
 
 
 exports.get_client = async (req, res, next) => {
+
+    const { name, email } = req.query;
+
+    let whereClause = {};
+
+    if (name && name.trim() !== '') {
+        whereClause.name = {
+            contains: name,
+            mode: 'insensitive' // This makes the search case-insensitive
+
+        }
+    };
+
+    if (email && email.trim() !== '') {
+        whereClause.email = {
+            contains: email,
+            mode: 'insensitive' // This makes the search case-insensitive
+
+        }
+    }
     try {
         const clients = await prisma.client.findMany({
+            where: { whereClause },
             select: {
                 id: true,
                 email: true,
@@ -39,6 +60,11 @@ exports.get_client = async (req, res, next) => {
                 createdAt: true
             }
         })
+
+
+        if (clients.length === 0) {
+            return res.status(404).json({ message: "No clients found matching the name." });
+        }
         const response = {
             total: clients.length,
             clients:

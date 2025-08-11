@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import AuthLoginForm from '../components/users/AuthLoginForm';
-import AuthSignupForm from '../components/users/AuthSignupForm';
+import { useNavigate } from 'react-router-dom';
+import AuthLoginForm from '../../components/users/AuthLoginForm';
+import AuthSignupForm from '../../components/users/AuthSignupForm';
 
 // import TimedParagraph from '../components/users/utilities/TimedParagraph';
 const AuthPage = () => {
@@ -10,7 +11,7 @@ const AuthPage = () => {
         message: null
     });
 
-
+    const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false)
     const [loadingAttemptMessage, setLoadingAttemptMessage] = useState('');
     const loginHandler = (loginData) => {
@@ -33,6 +34,7 @@ const AuthPage = () => {
                     // Si la réponse n'est pas OK, on lance une erreur
                     // en incluant le message du backend
                     console.log(data, response);
+                    setIsLoading(false);
                     throw new Error(data.message || "Une erreur est survenue.");
                 }
 
@@ -42,18 +44,20 @@ const AuthPage = () => {
             .then(data => {
                 // Handle successful login data, e.g., store the auth token
                 console.log('Login successful:', data);
-                setLoadingAttemptMessage(data.message) //##### ICI IL FAUDRA RENVOYER VERS LA PAGE D'ACCUEIL AUTOMATIQUEMENT
+                setLoadingAttemptMessage(data.message);
+                setIsLoading(false);
+                navigate('/homeCooking');
+
 
             })
             .catch(error => {
                 // Handle network errors or errors from the server
                 console.error('Error during login:', error);
                 setLoadingAttemptMessage(error.message)
+                setIsLoading(false);
 
             })
-            .finally(() => {
-                setIsLoading(false);
-            });
+
     };
 
     const signupHandler = (signupData) => {

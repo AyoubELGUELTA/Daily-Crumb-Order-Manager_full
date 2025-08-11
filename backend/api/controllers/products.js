@@ -5,11 +5,67 @@ const { relative } = require('path');
 
 
 exports.get_product = async (req, res, next) => {
+    const { name, priceGte, priceLt } = req.query;
+
+    let whereClause = {};
+
+    if (name && name.trim() !== '') {
+        whereClause.name = {
+            contains: name,
+            mode: 'insensitive' // This makes the search case-insensitive
+
+        }
+    }
+
+
+
+    if (priceGte) {
+
+        const parsedPriceGte = parseInt(priceGte);
+
+
+        if ((!Number.isInteger(parsedPriceGte))) {
+            return res.status(400).json({ message: "Your lowest price constraint is not a valid number." })
+        }
+        else {
+            if (!whereClause.price) {
+                whereClause.price = {};
+            }
+
+            whereClause.price.gte = parsedPriceGte;
+        }
+
+    }
+
+    if (priceLt) {
+
+        const parsedPriceLt = parseInt(priceLt);
+
+        if (!Number.isInteger(parsedPriceLt)) {
+            return res.status(400).json({ message: "Your highest price constraint is not a valid number." })
+        }
+        else {
+            if (!whereClause.price) {
+                whereClause.price = {};
+            }
+
+            whereClause.price.lte = parsedPriceLt;
+
+        }
+    }
+
+
+
+
 
 
     try {
 
         const products = await prisma.product.findMany({
+
+            where: {
+                whereClause
+            },
             include: {
                 images: {
                     select: {
@@ -21,6 +77,10 @@ exports.get_product = async (req, res, next) => {
                 }
             }
         });
+
+        if (products.length === 0) {
+            return res.status(404).json({ message: "No products found matching the criteria." });
+        }
 
         const response = {
             total: products.length,
@@ -51,6 +111,7 @@ exports.get_product = async (req, res, next) => {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 exports.get_single_product = async (req, res, next) => {
 

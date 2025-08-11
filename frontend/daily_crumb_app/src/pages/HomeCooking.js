@@ -5,13 +5,6 @@ const HomeCooking = () => {
         <div>
             <NavBar />
 
-            <div>
-                HELLO ! HERE WE COOOOOOK !
-            </div>
-
-            <div>
-                Plus tard, rajouter une histoire sur une entreprise fictive ...
-            </div>
 
         </div>
 

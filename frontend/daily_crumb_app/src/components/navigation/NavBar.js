@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 // Importer les icônes nécessaires
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
@@ -18,6 +18,14 @@ const NavBar = () => {
     const [isUpdateMenuOpen, setIsUpdateMenuOpen] = useState(false);
     const [isDeleteMenuOpen, setIsDeleteMenuOpen] = useState(false);
 
+
+    useEffect(() => {
+        if (!isOpen) {
+            setIsAddMenuOpen(isOpen);
+            setIsDeleteMenuOpen(isOpen);
+            setIsUpdateMenuOpen(isOpen);
+        }
+    }, [isOpen]);
 
     return (
 
