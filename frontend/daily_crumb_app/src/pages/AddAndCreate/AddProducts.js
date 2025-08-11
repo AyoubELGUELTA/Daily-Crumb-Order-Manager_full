@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import AddProductsForm from '../../components/products/AddProductsForm';
 
 const AddProducts = () => {
     return (
         <div>
-
+            <AddProductsForm />
         </div>
     );
 };
