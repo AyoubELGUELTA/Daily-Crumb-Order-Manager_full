@@ -6,6 +6,7 @@ import VerifyEmail from './pages/AuthRelatedPages/VerifyEmail';
 import HomeCooking from './pages/HomeCooking';
 import AddProducts from './pages/AddAndCreate/AddProducts';
 import UpdateProducts from './pages/UpdateAndManage/UpdateProducts';
+import UpdateFormProduct from './pages/UpdateAndManage/UpdateFormProduct';
 
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
         <Route path="/homeCooking" element={<HomeCooking />} />
         <Route path="/add/products" element={<AddProducts />} />
         <Route path="/update/products" element={<UpdateProducts />} />
+        <Route path="/update/products/product" element={<UpdateFormProduct />} />
 
       </Routes>
     </div>
