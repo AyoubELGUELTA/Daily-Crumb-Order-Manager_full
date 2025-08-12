@@ -5,6 +5,7 @@ import AuthPage from './pages/AuthRelatedPages/AuthPage';
 import VerifyEmail from './pages/AuthRelatedPages/VerifyEmail';
 import HomeCooking from './pages/HomeCooking';
 import AddProducts from './pages/AddAndCreate/AddProducts';
+import UpdateProducts from './pages/UpdateAndManage/UpdateProducts';
 
 
 function App() {
@@ -20,7 +21,7 @@ function App() {
         <Route path="/verifyEmail" element={<VerifyEmail onVerificationSuccess={onVerificationEmailSuccess} />} />
         <Route path="/homeCooking" element={<HomeCooking />} />
         <Route path="/add/products" element={<AddProducts />} />
-
+        <Route path="/update/products" element={<UpdateProducts />} />
 
       </Routes>
     </div>
