@@ -5,7 +5,7 @@ const AddProductsForm = (props) => {
     const [enteredFormData, setEnteredFormData] = useState({
         name: "",
         price: "",
-        inStock: false
+        inStock: "false"
     })
 
     const handleOnChange = (e) => {
@@ -23,6 +23,26 @@ const AddProductsForm = (props) => {
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState('');
+
+    const toggleInStockValue = () => {
+        if (enteredFormData.inStock === 'true') {
+            setEnteredFormData(prevState => {
+                return {
+                    ...prevState,
+                    inStock: "false"
+                }
+            })
+        }
+
+        else if (enteredFormData.inStock === 'false') {
+            setEnteredFormData(prevState => {
+                return {
+                    ...prevState,
+                    inStock: "true"
+                }
+            })
+        }
+    }
 
 
 
@@ -62,14 +82,14 @@ const AddProductsForm = (props) => {
             if (!response.ok) {
                 const errorData = await response.json();
                 setIsLoading(false);
-                throw new Error(errorData.message || 'Erreur lors de l\'ajout du produit.');
+                throw new Error(errorData.message || errorData.error || 'Error while trying to add the product.');
             }
 
             // Réinitialiser le formulaire après un succès
             setEnteredFormData({
                 name: "",
                 price: "",
-                inStock: false
+                inStock: "false"
             })
             setIsSuccess(true);
             setIsLoading(false);
@@ -135,7 +155,8 @@ const AddProductsForm = (props) => {
                                 name="inStock"
                                 type="checkbox"
                                 value={enteredFormData.inStock}
-                                onChange={handleOnChange}
+
+                                onChange={[toggleInStockValue, handleOnChange]}
                                 className="checkbox checkbox-xl ml-4" />
                         </div>
                     </fieldset>

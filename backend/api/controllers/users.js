@@ -140,9 +140,15 @@ exports.user_verifyEmail = async (req, res, next) => {
                 { expiresIn: "2h" }
             );
 
+            res.cookie('jwt', sessionToken, {
+                httpOnly: true, // prevents Javascript to access the cookie
+                secure: process.env.NODE_ENV === 'production', // Send the cookie only in HTTP in production
+                sameSite: 'strict',
+                maxAge: 2 * 60 * 60 * 1000 // 
+            });
+
             return res.status(200).json({
                 message: "Email was successfully verified",
-                token: sessionToken
             })
         }
 
@@ -195,9 +201,15 @@ exports.user_login = async (req, res, next) => {
                     { expiresIn: "2h" }
                 );
 
+                res.cookie('jwt', token, {
+                    httpOnly: true, //prevents Javascript to access the cookie
+                    secure: process.env.NODE_ENV === 'production', // N'envoie le cookie qu'en HTTPS en production
+                    sameSite: 'strict', // Protège contre les attaques CSRF
+                    maxAge: 2 * 60 * 60 * 1000 // 2 heures en millisecondes
+                });
+
                 return res.status(200).json({
-                    message: "Authentification successful",
-                    token: token
+                    message: "Authentification successful"
                 })
             }
 

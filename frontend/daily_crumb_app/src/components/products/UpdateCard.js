@@ -1,20 +1,64 @@
-import React, { use, useState } from 'react';
+import React, { use, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const UpdateCard = (props) => {
     // props to give to this component: -name, -price, -inStock, -image, -altText, -
     const [isEditing, setIsEditing] = useState(false);
     const [isBeingHovered, setIsBeingHovered] = useState(false);
-    const [isLoading, setIsLoading] = useState(false)
+    const [isLoading, setIsLoading] = useState(false);
+
+    const [isInStock, setIsInStock] = useState(props.inStock);
+
+    useEffect((inStockData) => {
+
+        setIsLoading(true);
+        fetch(`/products/${props.productId}`,
+            {
+                method: 'PATCH',
+                body: JSON.stringify(inStockData),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        )
+            .then(async response => {
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // Si la réponse n'est pas OK, on lance une erreur
+                    // en incluant le message du backend
+                    console.log(data, response);
+                    setIsLoading(false);
+                    throw new Error(data.message || "Une erreur est survenue.");
+                }
+
+                // Si tout est OK, on retourne les données pour le prochain "then"
+                return data;
+            })
+            .then(data => {
+                // Handle successful login data, e.g., store the auth token
+                console.log('successful patch', data);
+                setIsLoading(false);
+
+
+            })
+            .catch(error => {
+                // Handle network errors or errors from the server
+                console.error('Error during login:', error);
+                setIsLoading(false);
+
+            })
+
+    }, [isInStock])
 
     const navigate = useNavigate();
     const toggleIsEditing = () => {
         setIsEditing(lastValue => !lastValue);
     };
 
-    const deleteProductHandler = (productId) => {
+    const deleteProductHandler = () => {
         setIsLoading(true);
-        fetch(`/products/${productId}`,
+        fetch(`/products/${props.productId}`,
             {
                 method: 'DELETE'
             }
@@ -38,21 +82,24 @@ const UpdateCard = (props) => {
             .then(data => {
                 // Handle successful login data, e.g., store the auth token
                 console.log('Login successful:', data);
-                setLoadingAttemptMessage(data.message);
                 setIsLoading(false);
-                navigate('/homeCooking');
+                alert("Product successfully deleted.");
 
 
             })
             .catch(error => {
                 // Handle network errors or errors from the server
                 console.error('Error during login:', error);
-                setLoadingAttemptMessage(error.message)
                 setIsLoading(false);
+                alert(`Error while trying to delete the product: ${error.message}`)
 
             })
 
     };
+
+    const instockUpdateHandler = () => {
+
+    }
 
 
     const defaultImage = "https://image.pngaaa.com/700/5273700-middle.png"
@@ -116,18 +163,23 @@ const UpdateCard = (props) => {
                         navigate('/update/products/product');
                     }}
                         className="btn btn-square">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="size-6" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15.5l-4-4 1.41-1.41L11 14.67l7.59-7.59L20 8.5l-9 9z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325" />
                         </svg>
                     </button>
-                    <button className="btn btn-square">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="size-6" viewBox="0 0 24 24" fill="currentColor">
+                    <button onClick={setIsInStock(prevValue => !prevValue)} className="btn btn-square">
+                        {isInStock ? <svg xmlns="http://www.w3.org/2000/svg" className="size-6" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M16 9v-2h-3v-2h-2v2H8v2h-3v-2H2v2H0v2h2v-2h3v-2h2v2h2v-2h3v2h3v-2zm-6-2v-2h-2v2H10zM5 14h14v2H5v-2z" />
-                        </svg>
+                        </svg> :
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-toggle-off" viewBox="0 0 16 16">
+                                <path d="M11 4a4 4 0 0 1 0 8H8a5 5 0 0 0 2-4 5 5 0 0 0-2-4zm-6 8a4 4 0 1 1 0-8 4 4 0 0 1 0 8M0 8a5 5 0 0 0 5 5h6a5 5 0 0 0 0-10H5a5 5 0 0 0-5 5" />
+                            </svg>
+                        }
                     </button>
-                    <button className="btn btn-square">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="size-6" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    <button onClick={deleteProductHandler} className="btn btn-square">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
                         </svg>
                     </button>
                 </div>

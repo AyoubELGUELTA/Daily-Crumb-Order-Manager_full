@@ -18,9 +18,10 @@ const productRoutes = require('./api/routes/products');
 const orderRoutes = require('./api/routes/orders');
 const clientRoutes = require('./api/routes/clients');
 const userRoutes = require('./api/routes/users');
+const cookieParser = require('cookie-parser');
 
 
-
+app.use(cookieParser());
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header(
