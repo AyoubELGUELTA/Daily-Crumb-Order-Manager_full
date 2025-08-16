@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import OurProducts from './pages/OurProducts';
 import AuthPage from './pages/AuthRelatedPages/AuthPage';
 import VerifyEmail from './pages/AuthRelatedPages/VerifyEmail';
@@ -15,8 +15,8 @@ function App() {
   }
   return (
     <div>
-
       <Routes>
+        <Route path="/" element={<HomeCooking />} />
         <Route path="/ourProducts" element={<OurProducts />} />
         <Route path="/authentification" element={<AuthPage />} />
         <Route path="/verifyEmail" element={<VerifyEmail onVerificationSuccess={onVerificationEmailSuccess} />} />
@@ -24,6 +24,7 @@ function App() {
         <Route path="/add/products" element={<AddProducts />} />
         <Route path="/update/products" element={<UpdateProducts />} />
         <Route path="/update/products/product" element={<UpdateFormProduct />} />
+        <Route path="*" element={<Navigate to="/" />} />
 
       </Routes>
     </div>

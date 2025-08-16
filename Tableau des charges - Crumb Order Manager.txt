@@ -37,3 +37,57 @@ Rôles : admin (gère tout), employé (gère commandes uniquement). TODO
 📱 7. Version mobile-friendly (optionnel)
 Interface adaptée pour téléphone pour consultation rapide des commandes.
 
+
+
+const UpdateCard = ({
+  productId,
+  productName,
+  productPrice,
+  productInStock,
+  productImages,
+  onDelete,
+  onInStockChange,
+  onGeneralChange
+}) => {
+  // Exemple pour afficher l'image principale :
+  const mainImage = productImages.find(img => img.isMain);
+
+  return (
+    <div className="card">
+      <img
+        src={mainImage ? mainImage.url : '/placeholder.jpg'}
+        alt={mainImage ? mainImage.altText : productName}
+      />
+      <h2>{productName}</h2>
+      <p>{productPrice} €</p>
+      <p>{productInStock ? 'In stock' : 'Out of stock'}</p>
+      {/* Boutons ou formulaires pour update */}
+    </div>
+  );
+};
+📌 Avantages avec ce renommage :
+
+Les noms de props sont explicites (productName, productPrice, etc.) → pas de confusion.
+
+productImages contient toutes les infos des images (id, url, isMain, altText).
+
+Facile à afficher l’image principale ou gérer une galerie.
+
+Si tu veux, je peux te préparer UpdateCard.js complet avec édition nom/prix/inStock et image principale qui utilise tes callbacks.
+Tu veux que je te le fasse ?
+
+
+
+
+
+
+
+
+
+Demander à ChatGPT
+
+
+
+
+
+

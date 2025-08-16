@@ -63,9 +63,9 @@ exports.get_product = async (req, res, next) => {
 
         const products = await prisma.product.findMany({
 
-            where: {
+            where:
                 whereClause
-            },
+            ,
             include: {
                 images: {
                     select: {
@@ -167,13 +167,17 @@ exports.get_single_product = async (req, res, next) => {
 exports.post_new_product = async (req, res, next) => {
 
     try {
-        const BooleanList = ['True', 'true', 'false', 'False', 'TRUE', 'FALSE']
-        inStock = BooleanList.includes(req.body.inStock)
+        const inStock = req.body.inStock === 'true';
 
+        const price = parseFloat(req.body.price);
+
+        if (isNaN(price)) {
+            throw new Error('Invalid price');
+        }
         const product = await prisma.product.create({
             data: {
                 name: req.body.name,
-                price: req.body.price,
+                price: price,
                 inStock: inStock || false
             }
         });

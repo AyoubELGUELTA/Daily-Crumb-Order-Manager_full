@@ -1,105 +1,46 @@
 import React, { use, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const UpdateCard = (props) => {
+const UpdateCard = ({
+    productId,
+    productName,
+    productPrice,
+    productInStock,
+    productImages,
+    onDelete,
+    onInStockChange,
+    onGeneralChange
+}) => {
     // props to give to this component: -name, -price, -inStock, -image, -altText, -
     const [isEditing, setIsEditing] = useState(false);
     const [isBeingHovered, setIsBeingHovered] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const [isInStock, setIsInStock] = useState(props.inStock);
+    const [isInStock, setIsInStock] = useState(productInStock);
 
-    useEffect((inStockData) => {
-
-        setIsLoading(true);
-        fetch(`/products/${props.productId}`,
-            {
-                method: 'PATCH',
-                body: JSON.stringify(inStockData),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
-        )
-            .then(async response => {
-                const data = await response.json();
-
-                if (!response.ok) {
-                    // Si la réponse n'est pas OK, on lance une erreur
-                    // en incluant le message du backend
-                    console.log(data, response);
-                    setIsLoading(false);
-                    throw new Error(data.message || "Une erreur est survenue.");
-                }
-
-                // Si tout est OK, on retourne les données pour le prochain "then"
-                return data;
-            })
-            .then(data => {
-                // Handle successful login data, e.g., store the auth token
-                console.log('successful patch', data);
-                setIsLoading(false);
+    const mainImage = productImages.find(img => img.isMain);
 
 
-            })
-            .catch(error => {
-                // Handle network errors or errors from the server
-                console.error('Error during login:', error);
-                setIsLoading(false);
+    const handleToggleStock = (e) => {
+        e.stopPropagation();
+        const newStock = !isInStock;
+        setIsInStock(newStock);
+        onInStockChange(productId, newStock);
+    };
 
-            })
-
-    }, [isInStock])
 
     const navigate = useNavigate();
     const toggleIsEditing = () => {
         setIsEditing(lastValue => !lastValue);
     };
 
-    const deleteProductHandler = () => {
-        setIsLoading(true);
-        fetch(`/products/${props.productId}`,
-            {
-                method: 'DELETE'
-            }
-        )
-            .then(async response => {
-                // Le corps de la réponse doit être lu, peu importe le statut.
-                // On utilise "async/await" à l'intérieur du "then" pour plus de clarté.
-                const data = await response.json();
-
-                if (!response.ok) {
-                    // Si la réponse n'est pas OK, on lance une erreur
-                    // en incluant le message du backend
-                    console.log(data, response);
-                    setIsLoading(false);
-                    throw new Error(data.message || "Une erreur est survenue.");
-                }
-
-                // Si tout est OK, on retourne les données pour le prochain "then"
-                return data;
-            })
-            .then(data => {
-                // Handle successful login data, e.g., store the auth token
-                console.log('Login successful:', data);
-                setIsLoading(false);
-                alert("Product successfully deleted.");
-
-
-            })
-            .catch(error => {
-                // Handle network errors or errors from the server
-                console.error('Error during login:', error);
-                setIsLoading(false);
-                alert(`Error while trying to delete the product: ${error.message}`)
-
-            })
+    const deleteProductHandler = (e) => {
+        e.stopPropagation();
+        onDelete(productId);
 
     };
 
-    const instockUpdateHandler = () => {
 
-    }
 
 
     const defaultImage = "https://image.pngaaa.com/700/5273700-middle.png"
@@ -119,8 +60,8 @@ const UpdateCard = (props) => {
         ${isEditing ? "translate-y-[-30px] shadow-black/70" : ""}`}>
             < div className="bg-white rounded-lg shadow-md p-4" >
                 <img
-                    src={props.image ? props.image : defaultImage}
-                    alt={props.altText}
+                    src={mainImage.url ? mainImage.url : defaultImage}
+                    alt={mainImage.altText ? mainImage.altText : { productName } + "/" + { productId }}
                     className={`w-full h-32 object-cover rounded-md mb-4 transition-all duration-500 
                                 ${isBeingHovered ? 'border-0 scale-125' : 'border-4 border-indigo-500'}`} />
 
@@ -128,14 +69,14 @@ const UpdateCard = (props) => {
                 <div className='flex flex-col'>
                     <div>
                         <h3 className="text-xl text-center font-extrabold font-sans">
-                            {props.name} Fateau a la framboiseeeee
+                            {productName}
                         </h3>
                     </div>
                     <div className='mt-4 flex justify-between'>
                         <div className="badge badge-soft badge-primary">
-                            Price </div>
+                            {productPrice} </div>
 
-                        {props.inStock ?
+                        {productInStock ?
                             <div className="badge badge-success">
                                 <svg className="size-[1em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="currentColor" strokeLinejoin="miter" strokeLinecap="butt"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeLinecap="square" stroke-miterlimit="10" strokeWidth="2"></circle><polyline points="7 13 10 16 17 8" fill="none" stroke="currentColor" strokeLinecap="square" stroke-miterlimit="10" strokeWidth="2"></polyline></g></svg>
                                 In Stock
@@ -160,14 +101,14 @@ const UpdateCard = (props) => {
                 <div className="absolute top-1/2 right-0 transform translate-x-[6px]  flex flex-col gap-2 p-2 bg-white rounded-lg shadow-xl">
                     <button onClick={(e) => {
                         e.stopPropagation();
-                        navigate('/update/products/product');
+                        navigate('/update/products/product'); // NO I HAVE TO OPEN A NEW COMPONENT FORM TO UPDATE NAME, PRICE AND MANAGE IMAGES OF THE PRODUCT
                     }}
                         className="btn btn-square">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
                             <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325" />
                         </svg>
                     </button>
-                    <button onClick={setIsInStock(prevValue => !prevValue)} className="btn btn-square">
+                    <button onClick={handleToggleStock} className="btn btn-square">
                         {isInStock ? <svg xmlns="http://www.w3.org/2000/svg" className="size-6" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M16 9v-2h-3v-2h-2v2H8v2h-3v-2H2v2H0v2h2v-2h3v-2h2v2h2v-2h3v2h3v-2zm-6-2v-2h-2v2H10zM5 14h14v2H5v-2z" />
                         </svg> :
