@@ -8,10 +8,6 @@ const CardList = () => {
 
   // Fetch initial
 
-  useEffect(() => {
-    console.log('Updated products state:', products);
-  }, [products]);
-
 
   useEffect(() => {
     fetchProducts();
@@ -70,10 +66,11 @@ const CardList = () => {
         }
       )
 
-      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Error occured.");
+        const errorData = await response.json();
+
+        throw new Error(errorData.message || "Error occured.");
       }
 
 
@@ -82,63 +79,56 @@ const CardList = () => {
     }
     catch (error) {
       setProducts(previousProducts);
-      alert(`Error while trying to delete the product: ${error.message}`)
+      setError(`Error: ${error.message}`)
 
     }
 
   }
 
 
-  const handleInStockChange = (productId, newInStock) => {
+  const handleInStockChange = async (productId, newInStock) => {
+    const previousProducts = products;
+
+    // Optimistically update the UI
     setProducts(prev =>
       prev.map(p => p.id === productId ? { ...p, inStock: newInStock } : p)
     );
 
-
-
     const inStockData = { inStock: newInStock };
 
-    fetch(`/products/${productId}`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify(inStockData),
-        headers: {
-          'Content-Type': 'application/json'
-        }
+    // Make the PATCH request
+    fetch(`/products/${productId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(inStockData),
+      headers: {
+        'Content-Type': 'application/json'
+        // You should also include the authorization header here
+        // 'Authorization': `Bearer ${token}`
       }
-    )
+    })
       .then(async response => {
         const data = await response.json();
 
         if (!response.ok) {
-          // Si la réponse n'est pas OK, on lance une erreur
-          // en incluant le message du backend
+          // If the request was not successful, revert the state
           console.log(data, response);
-          setIsLoading(false);
-          throw new Error(data.message || "Une erreur est survenue.");
+          throw new Error(data.message || "An error occurred.");
         }
 
-        // Si tout est OK, on retourne les données pour le prochain "then"
-        return data;
-      })
-      .then(data => {
-        // Handle successful login data, e.g., store the auth token
         console.log('successful patch', data);
-
-
+        // No state update needed here because it was done optimistically
       })
       .catch(error => {
-        // Handle network errors or errors from the server
-        console.error('Error during login:', error);
-        setProducts(prevProducts =>
-          prevProducts.map(p =>
-            p.id === productId ? { ...p, inStock: !newInStock } : p
-          )
-        );
+        // Revert the state to the previous value if the request failed
+        console.error('Error during optimistic update:', error);
+        setError(`Error: ${error.message}`);
+        setProducts(previousProducts); // Revert to the stored previous state
+      });
 
-      })
-
-  }
+  };
+  const handleOverlayClick = () => {
+    setError('');
+  };
 
 
 
@@ -148,16 +138,28 @@ const CardList = () => {
 
 
     <div className="flex flex-wrap gap-4">
+      <h2 className="text-3xl font-bold mb-6 text-center">Products managing</h2>
 
       {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center z-[90]">
           <div className="fixed inset-0 bg-white/50 backdrop-blur-sm"></div>
-          <p className="text-center text-blue-500 mb-4 z-[100]">Adding in progress...</p>
+          <p className="text-center text-blue-500 mb-4 z-[100]">Please wait...</p>
           <span className='loading loading-infinity loading-xl z-[100]'></span>
         </div>
       )}
-      {error && <p className="text-center text-red-500 mb-4">Error : {error}</p>}
-      {products.length > 0 ? (
+      {error && (
+
+        <div onClick={handleOverlayClick}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        >
+          <div className="bg-white p-8 rounded-lg shadow-xl text-center">
+
+            <p className="text-xl font-bold mb-4">{error}</p>
+          </div>
+
+        </div>
+
+      )}      {products.length > 0 ? (
         products.map(product => (
           <UpdateCard
             key={product.id}

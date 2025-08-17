@@ -79,7 +79,7 @@ exports.get_product = async (req, res, next) => {
         });
 
         if (products.length === 0) {
-            return res.status(404).json({ message: "No products found matching the criteria." });
+            return res.status(404).json({ message: "No products found matching the criteria (or no products in the DB)." });
         }
 
         const response = {
@@ -167,7 +167,7 @@ exports.get_single_product = async (req, res, next) => {
 exports.post_new_product = async (req, res, next) => {
 
     try {
-        const inStock = req.body.inStock === 'true';
+        const inStock = ["true", "True", "TRUE"].includes(req.body.inStock.toString());
 
         const price = parseFloat(req.body.price);
 
@@ -409,7 +409,7 @@ exports.update_product = async (req, res, next) => {
                     updateData[field] = parsedPrice;
                 }
                 else if (field === 'inStock') {
-                    if (req.body[field] !== undefined && !['true', 'True', 'false', 'False'].includes(req.body[field])) {
+                    if (req.body[field] !== undefined && !['true', 'True', 'false', 'False'].includes(req.body[field].toString())) {
                         return res.status(400).json({ message: 'inStocke must be a boolean (true/false)' })
                     }
                     updateData[field] = req.body[field] || false

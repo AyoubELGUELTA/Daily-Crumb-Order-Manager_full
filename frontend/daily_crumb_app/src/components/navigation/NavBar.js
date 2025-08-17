@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 // Importer les icônes nécessaires
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import { ChevronLeftIcon, ChevronRightIcon, ArrowLeftOnRectangleIcon } from "@heroicons/react/24/solid";
 import {
     HomeIcon,
     ShoppingBagIcon,
@@ -171,6 +171,14 @@ const NavBar = () => {
                     >
                         <ChartPieIcon className="h-6 w-6" />
                         {isOpen && <span>Stats and overview</span>}
+                    </Link>
+
+                    <Link
+                        to="/authentification"
+                        className="mt-auto flex items-center gap-2 py-3 px-4 hover:bg-gray-700 rounded-lg text-lg"
+                    >
+                        <ArrowLeftOnRectangleIcon className="h-6 w-6" />
+                        {isOpen && <span>Login/Sign Up</span>}
                     </Link>
                 </nav>
             </div>
