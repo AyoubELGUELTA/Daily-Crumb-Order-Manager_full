@@ -1,6 +1,6 @@
 import React from 'react';
 
-const UpdateFormProduct = () => {
+const UpdateProductForm = () => {
     return (
         <div>
 
@@ -8,4 +8,4 @@ const UpdateFormProduct = () => {
     );
 };
 
-export default UpdateFormProduct;
+export default UpdateProductForm;

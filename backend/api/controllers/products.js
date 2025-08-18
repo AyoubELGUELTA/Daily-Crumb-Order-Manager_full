@@ -3,6 +3,9 @@ const { fileTypeFromFile } = require('file-type/node');
 const fs = require('fs/promises');
 const { relative } = require('path');
 
+const admin = require('../services/firebase-admin-config.js');
+
+
 
 exports.get_product = async (req, res, next) => {
     const { name, priceGte, priceLt } = req.query;
@@ -203,81 +206,98 @@ exports.post_new_image_product = async (req, res, next) => {
 
     const productId = parseInt(req.params.productId);
 
-    const uploadedFile = req.file;
+    const uploadedFiles = req.files;
 
-    if (!uploadedFile) {
-        return res.status(400).json({ message: "Image file was not given." })
+    if (!uploadedFiles || uploadedFiles.length === 0) {
+        return res.status(400).json({ message: "Image files were not given." });
     }
 
     try {
-
-        const detectedType = await fileTypeFromFile(uploadedFile.path);
-
-        if (!detectedType || (detectedType.mime !== 'image/jpeg' && detectedType.mime !== 'image/png')) {
-            await fs.unlink(uploadedFile.path);
-            return res.status(400).json({ message: 'Type de fichier non supporté. Seules les images JPEG et PNG sont autorisées.' });
-        }
-
-        const imageUrl = uploadedFile.path.replace(/\\/g, '/'); // Assurer un chemin URL-friendly
-        let { isMain, altText } = req.body;
-
+        // Récupérer le nom du produit une seule fois pour tous les fichiers
         const product = await prisma.product.findUnique({
             where: { id: productId }
         });
-        const productName = product.name.replace(' ', '_');
+        if (!product) {
+            return res.status(404).json({ message: "Product not found." });
+        }
+        const productName = product.name.replace(/\s+/g, '_');
 
-        const existingProductImages = await prisma.productImage.count({
+        const numberOfImages = await prisma.productImage.count({
             where: { productId: productId }
+        })
+
+        if ((numberOfImages + uploadedFiles.length) > 5) {
+            return res.status(404).json({ message: "Products can only display 5 different images, please delete some current images to not exceed that number." })
+        }
+
+        // Créer un tableau de promesses pour chaque upload
+        const uploadPromises = uploadedFiles.map(async (uploadedFile) => {
+            // Validation du type de fichier
+            if (uploadedFile.mimetype !== 'image/jpeg' && uploadedFile.mimetype !== 'image/png') {
+                // Pour une seule image, on pourrait retourner une erreur ici.
+                // Pour plusieurs, on peut choisir d'ignorer le fichier ou de retourner une erreur pour tous.
+                // Ici, nous lançons une exception pour interrompre l'opération.
+                throw new Error('Type de fichier non supporté. Seules les images JPEG et PNG sont autorisées.');
+            }
+
+            const fileExtension = uploadedFile.mimetype.split('/')[1];
+            const fileName = `${productName}_${uuidv4()}.${fileExtension}`;
+            const bucket = getStorage().bucket();
+            const file = bucket.file(`products/${fileName}`);
+
+            // Utiliser un "writable stream" pour uploader le fichier depuis le buffer
+            const fileStream = file.createWriteStream({
+                metadata: {
+                    contentType: uploadedFile.mimetype,
+                },
+            });
+
+            // On peut aussi utiliser la méthode plus simple `file.save` si on a le buffer en mémoire.
+            // await file.save(uploadedFile.buffer, { contentType: uploadedFile.mimetype });
+
+            // On attend la fin de l'upload
+            await new Promise((resolve, reject) => {
+                fileStream.on('finish', resolve);
+                fileStream.on('error', reject);
+                fileStream.end(uploadedFile.buffer);
+            });
+
+            // Générer l'URL une fois l'upload terminé
+            const [url] = await file.getSignedUrl({
+                action: 'read',
+                expires: '03-09-2491',
+            });
+
+            // Gérer le texte alternatif
+            let { altText } = req.body;
+            if (!altText) {
+                altText = `imageProduct-${productName}-${uuidv4().substring(0, 8)}`; // Ajout d'un identifiant unique
+            }
+
+            // Créer une nouvelle entrée dans la base de données
+            const newProductImage = await prisma.productImage.create({
+                data: {
+                    url: url,
+                    altText: altText,
+                    productId: productId
+                },
+            });
+
+            return newProductImage;
         });
 
-        const existingMainImage = await prisma.productImage.findFirst({
-            where: {
-                productId: productId,
-                isMain: true
-            }
-        })
+        // Exécuter toutes les promesses d'upload en parallèle
+        const newProductImages = await Promise.all(uploadPromises);
 
-        if (existingMainImage) {
-            if (isMain === "true" || isMain === "True") {
-                await fs.unlink(uploadedFile.path)
-                return res.status(400).json({ message: "You already assigned a Main image, please remove this latter assignement to place it on this new image." })
-            }
+        res.status(201).json({
+            message: `${newProductImages.length} new product image(s) added!`,
+            images: newProductImages.map(img => ({ url: img.url, altText: img.altText }))
+        });
 
-
-        }
-
-        else if (existingProductImages === 0) {
-            isMain = true
-        }
-
-
-
-        if (!altText) {
-            altText = "imageProduct-" + productName
-        }
-
-        const newProductImage = await prisma.productImage.create({
-            data: {
-                url: imageUrl,
-                isMain: isMain || false,
-                altText: altText,
-                productId: productId
-            },
-
-        })
-
-        res.status(201).json({ message: "New image product added!" })
-
-    }
-
-    catch (error) {
-        try {
-            await fs.unlink(`api/uploads/${relativePath}`);
-        } catch (fileError) {
-            if (fileError.code !== 'ENOENT') {// si le code == ENOENT ça veut dire que le fichier/ la requête de l'objet n'a pas été trouvé
-                throw fileError;
-            } res.status(500).json({ error: error.message })
-        }
+    } catch (error) {
+        console.error("Error during image upload:", error);
+        // Si une erreur se produit, nous renvoyons une seule erreur pour toutes les images
+        res.status(500).json({ error: error.message });
     }
 };
 

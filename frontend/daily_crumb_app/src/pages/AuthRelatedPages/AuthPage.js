@@ -2,6 +2,25 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthLoginForm from '../../components/users/AuthLoginForm';
 import AuthSignupForm from '../../components/users/AuthSignupForm';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInWithCustomToken } from 'firebase/auth';
+
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAKA8j96I7karsLOQVONZczbOT8M1qf2KY",
+    authDomain: "daily-crumb-uploads.firebaseapp.com",
+    projectId: "daily-crumb-uploads",
+    storageBucket: "daily-crumb-uploads.firebasestorage.app",
+    messagingSenderId: "239161507344",
+    appId: "1:239161507344:web:37938eede2745bc2d09495",
+    measurementId: "G-RNPQ53ED7R"
+};
+
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+
 
 // import TimedParagraph from '../components/users/utilities/TimedParagraph';
 const AuthPage = () => {
@@ -14,6 +33,7 @@ const AuthPage = () => {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false)
     const [loadingAttemptMessage, setLoadingAttemptMessage] = useState('');
+
     const loginHandler = (loginData) => {
         setIsLoading(true);
         fetch(`/users/login`,
@@ -41,9 +61,14 @@ const AuthPage = () => {
                 // Si tout est OK, on retourne les données pour le prochain "then"
                 return data;
             })
-            .then(data => {
+            .then(async data => {
                 // Handle successful login data, e.g., store the auth token
                 console.log('Login successful:', data);
+                const firebaseCustomToken = data.firebaseCustomToken;
+
+                await signInWithCustomToken(auth, firebaseCustomToken);
+
+
                 setLoadingAttemptMessage(data.message);
                 setIsLoading(false);
                 navigate('/homeCooking');

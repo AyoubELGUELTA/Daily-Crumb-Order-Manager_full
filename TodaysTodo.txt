@@ -1,0 +1,236 @@
+Objectif du jour :--> Finir le component qui pop pour update un product dans update product,
+avec tous les fonctionnalités à l'intérieur.
+
+
+
+
+import React, { useState, useEffect } from 'react';
+
+// Assurez-vous d'avoir les imports Firebase Firestore nécessaires
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, updateDoc } from 'firebase/firestore';
+
+// Définir la configuration Firebase et l'ID de l'application
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+// Composant de mise à jour du produit
+const UpdateProductForm = ({ product, onUpdateSuccess, onCancel }) => {
+    // Initialise l'état du formulaire avec les données du produit existant
+    const [productFormData, setProductFormData] = useState({
+        name: product?.name || '',
+        price: product?.price || '',
+    });
+    const [images, setImages] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        // Met à jour les données du formulaire si le produit change
+        if (product) {
+            setProductFormData({
+                name: product.name,
+                price: product.price,
+            });
+        }
+    }, [product]);
+
+    useEffect(() => {
+        if (isSuccess) {
+            const timer = setTimeout(() => {
+                setIsSuccess(false);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [isSuccess]);
+
+    const handleOnChange = (e) => {
+        const { name, value } = e.target;
+        setProductFormData(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
+    };
+
+    const handleImageChange = (e) => {
+        // Gère la sélection des fichiers.
+        // Note: Pour une implémentation réelle, il faudrait envoyer ces fichiers à un service de stockage (comme Cloud Storage for Firebase)
+        const files = Array.from(e.target.files);
+        setImages(files);
+        console.log("Fichiers sélectionnés pour l'upload:", files);
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError('');
+        setIsSuccess(false);
+
+        // Simulation de l'appel API pour la mise à jour
+        try {
+            // Initialisation de Firebase
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+
+            // Connexion utilisateur
+            if (initialAuthToken) {
+                await signInWithCustomToken(auth, initialAuthToken);
+            } else {
+                await signInAnonymously(auth);
+            }
+
+            const userId = auth.currentUser?.uid || 'anonymous-user';
+
+            // Référence au document du produit à mettre à jour
+            const productDocRef = doc(db, `/artifacts/${appId}/users/${userId}/products`, product.id);
+
+            // Mise à jour du document avec les nouvelles données
+            await updateDoc(productDocRef, {
+                name: productFormData.name,
+                price: parseFloat(productFormData.price),
+                // Note: La gestion de l'image est un peu plus complexe et devrait être gérée séparément
+                // en utilisant par exemple Cloud Storage. Ici, on simule juste.
+                updatedAt: new Date().toISOString()
+            });
+
+            // Gérer l'upload des images (simulation)
+            if (images.length > 0) {
+                // Dans une vraie application, vous uploaderiez les images ici
+                // et stockeriez les URL d'image dans le document Firestore.
+                console.log("Uploading images to storage...");
+                // Simuler une attente
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
+
+            setIsSuccess(true);
+            onUpdateSuccess();
+        } catch (err) {
+            console.error("Erreur lors de la mise à jour du produit:", err);
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+            <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                <h2 className="text-3xl font-bold mb-6 text-center">Mettre à jour le produit</h2>
+
+                {/* Messages de feedback */}
+                {isLoading && (
+                    <div className="fixed inset-0 flex items-center justify-center z-[90]">
+                        <div className="fixed inset-0 bg-white/50 backdrop-blur-sm"></div>
+                        <p className="text-center text-blue-500 mb-4 z-[100]">Mise à jour en cours...</p>
+                        <span className='loading loading-infinity loading-xl z-[100]'></span>
+                    </div>
+                )}
+                {isSuccess && <p className="text-center text-green-500 mb-4">La mise à jour a été effectuée avec succès!</p>}
+                {error && <p className="text-center text-red-500 mb-4">Erreur : {error}</p>}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
+                        <legend className="fieldset-legend">Formulaire de mise à jour</legend>
+
+                        <label className="label">Nom</label>
+                        <input
+                            id="name"
+                            type="text"
+                            name="name"
+                            value={productFormData.name}
+                            onChange={handleOnChange}
+                            className="input w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            required
+                        />
+
+                        <label className="label mt-4">Prix</label>
+                        <input
+                            id="price"
+                            type="number"
+                            name="price"
+                            value={productFormData.price}
+                            onChange={handleOnChange}
+                            className="input w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            required
+                        />
+                        
+                        <label className="label mt-4">Images</label>
+                        <input
+                            id="images"
+                            type="file"
+                            name="images"
+                            onChange={handleImageChange}
+                            className="file-input w-full max-w-xs"
+                            multiple
+                        />
+                    </fieldset>
+                    <div className="flex gap-2 mt-4">
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-colors duration-200
+                                ${isLoading
+                                    ? 'bg-indigo-300 cursor-not-allowed'
+                                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                }`}
+                        >
+                            {isLoading ? 'Mise à jour...' : 'Mettre à jour le produit'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onCancel}
+                            className="flex-1 py-3 px-4 rounded-lg font-semibold transition-colors duration-200 bg-gray-300 text-gray-800 hover:bg-gray-400"
+                        >
+                            Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+// Composant parent pour simuler l'utilisation
+const App = () => {
+    // Simuler un produit existant pour la mise à jour
+    const [selectedProduct, setSelectedProduct] = useState({
+        id: 'product_123',
+        name: 'Gâteau aux fraises',
+        price: 10.99,
+    });
+
+    const handleUpdateSuccess = () => {
+        // Logique après la mise à jour, par exemple fermer le formulaire et recharger la liste
+        console.log("Mise à jour réussie. Retour à la liste.");
+        setSelectedProduct(null);
+    };
+
+    const handleCancel = () => {
+        // Fermer le formulaire sans action
+        setSelectedProduct(null);
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-100 p-8">
+            <h1 className="text-4xl font-bold text-center mb-8">Espace Admin de Produits</h1>
+            
+            {/* Rendu conditionnel du formulaire de mise à jour */}
+            {selectedProduct ? (
+                <UpdateProductForm product={selectedProduct} onUpdateSuccess={handleUpdateSuccess} onCancel={handleCancel} />
+            ) : (
+                <div className="flex justify-center">
+                    <button onClick={() => setSelectedProduct({ id: 'product_123', name: 'Gâteau aux fraises', price: 10.99 })}
+                            className="bg-green-600 text-white py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-200">
+                        Afficher le formulaire de mise à jour
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default App;

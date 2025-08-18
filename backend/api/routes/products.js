@@ -9,14 +9,8 @@ const multer = require('multer');
 const checkAdminRole = require('../middlewares/checkAdmin');
 
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, './api/uploads/');
-    },
-    filename: function (req, file, cb) {
-        cb(null, new Date().toISOString().replace(/:/g, '-') + file.originalname);
-    }
-});
+const storage = multer.memoryStorage();
+
 
 const fileFilter = async (req, file, cb) => {
     if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
@@ -46,7 +40,7 @@ router.delete('/:productId', authenticateToken, checkAdminRole, ProductsControll
 router.patch('/:productId', authenticateToken, checkAdminRole, ProductsControllers.update_product);
 
 
-router.post('/:productId/images', authenticateToken, checkAdminRole, upload.single('productImage'), ProductsControllers.post_new_image_product);
+router.post('/:productId/images', authenticateToken, checkAdminRole, upload.array('productImages', 3), ProductsControllers.post_new_image_product);
 
 router.delete('/:productId/images/:imageId', authenticateToken, checkAdminRole, ProductsControllers.delete_image_product);
 

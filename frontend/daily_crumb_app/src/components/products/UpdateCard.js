@@ -14,7 +14,6 @@ const UpdateCard = ({
     // props to give to this component: -name, -price, -inStock, -image, -altText, -
     const [isEditing, setIsEditing] = useState(false);
     const [isBeingHovered, setIsBeingHovered] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
     const [isInStock, setIsInStock] = useState(productInStock);
 
 
