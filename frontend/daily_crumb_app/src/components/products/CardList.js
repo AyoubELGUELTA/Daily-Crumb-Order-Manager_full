@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import UpdateCard from './UpdateCard';
+import UpdateProductForm from './UpdateProductForm';
 
 const CardList = () => {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-
-  // Fetch initial
+  const [prefilledInfoEditProduct, setPreffiledInfoEditProduct] = useState({
+    id: "",
+    name: "",
+    price: "",
+    images: []
+  })
 
 
   useEffect(() => {
@@ -42,15 +47,37 @@ const CardList = () => {
 
 
 
-  const handleGeneralChange = (productId, updatedFields) => {
-    setProducts(prev =>
-      prev.map(p =>
-        p.id === productId
-          ? { ...p, ...updatedFields }
-          : p
+  const handleGeneralChange = async (productId) => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch(`/products/${productId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       )
-    );
-  };
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Error fetching product current infos');
+      }
+      setPreffiledInfoEditProduct({
+        id: data.product.id,
+        name: data.product.name,
+        price: data.product.price,
+        images: data.product.images
+      })
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   const handleDelete = async (productId) => {
 
@@ -126,11 +153,24 @@ const CardList = () => {
       });
 
   };
+
+
   const handleOverlayClick = () => {
     setError('');
   };
 
+  const handleClosingUpdateForm = () => {
+    setPreffiledInfoEditProduct({
+      id: "",
+      name: "",
+      price: "",
+      images: []
+    })
+  }
 
+  const handleSubmitingGeneralData = () => {
+
+  }
 
 
 
@@ -159,7 +199,12 @@ const CardList = () => {
 
         </div>
 
-      )}      {products.length > 0 ? (
+      )}
+      {
+
+      }
+
+      {products.length > 0 ? (
         products.map(product => (
           <UpdateCard
             key={product.id}
@@ -176,7 +221,16 @@ const CardList = () => {
       ) : (
         <p>No products found.</p>
       )}
+
+      {prefilledInfoEditProduct ? <div><UpdateProductForm
+        name={prefilledInfoEditProduct.name}
+        price={prefilledInfoEditProduct.price}
+        images={prefilledInfoEditProduct.images}
+        onUpdateSuccess={handleClosingUpdateForm}
+        onCancel={handleClosingUpdateForm} /></div>
+        : null}
     </div>
+
   );
 }
 

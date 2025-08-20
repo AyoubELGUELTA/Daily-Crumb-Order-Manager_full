@@ -74,7 +74,6 @@ exports.get_product = async (req, res, next) => {
                     select: {
                         id: true,
                         url: true,
-                        isMain: true,
                         altText: true
                     }
                 }
@@ -126,7 +125,6 @@ exports.get_single_product = async (req, res, next) => {
                 images: {
                     select: {
                         id: true,
-                        isMain: true,
                         altText: true,
                         url: true
                     }
@@ -146,7 +144,6 @@ exports.get_single_product = async (req, res, next) => {
                 inStock: product.inStock,
                 images: product.images.map(image => ({
                     id: image.id,
-                    isMain: image.isMain,
                     altText: image.altText,
                     url: image.url
                 })),

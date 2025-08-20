@@ -1,17 +1,20 @@
 import React from 'react';
 import CardList from '../../components/products/CardList';
 import NavBar from '../../components/navigation/NavBar';
+import FirebaseProvider from '../../contexts/FirebaseProvider';
 const UpdateProducts = () => {
 
 
 
     return (
-        <div className='flex'>
-            <NavBar />
-            <div>
-                <CardList />
+        <FirebaseProvider>
+            <div className='flex'>
+                <NavBar />
+                <div>
+                    <CardList />
+                </div>
             </div>
-        </div>
+        </FirebaseProvider>
     );
 };
 
