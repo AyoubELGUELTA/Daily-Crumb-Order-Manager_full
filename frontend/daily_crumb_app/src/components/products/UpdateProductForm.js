@@ -1,26 +1,17 @@
 import React, { useState, useEffect } from 'react';
 
-
-
-const { db, userId, appId, auth } = useFirebase();
-
-
-// Variables de l'environnement de la plateforme
-const platformAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-// Composant de mise à jour du produit
-const UpdateProductForm = ({ onUpdateSuccess, id, name, price, imagesArray, onCancel }) => {
-    // Initialise l'état du formulaire avec les données du produit existant
+const UpdateProductForm = ({ handleDeleteImage, onUpdateSuccess, id, name, price, images, onCancel }) => {
     const [productFormData, setProductFormData] = useState({
         id: id || '',
         name: name || '',
         price: price || '',
-        images: imagesArray || []
+        images: images || []
     });
-    const [images, setImages] = useState([]);
+
+    const [newImages, setNewImages] = useState([]); // nouvelles images à uploader
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [deleteImageHover, SetDeleteImageHover] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -28,30 +19,24 @@ const UpdateProductForm = ({ onUpdateSuccess, id, name, price, imagesArray, onCa
             id: id || '',
             name: name || '',
             price: price || '',
-            images: imagesArray || []
+            images: images || []
         });
-    }, [id, name, price, imagesArray]);
+    }, [id, name, price, images]);
 
     useEffect(() => {
         if (isSuccess) {
-            const timer = setTimeout(() => {
-                setIsSuccess(false);
-            }, 2000);
+            const timer = setTimeout(() => setIsSuccess(false), 2000);
             return () => clearTimeout(timer);
         }
     }, [isSuccess]);
 
     const handleOnChange = (e) => {
         const { name, value } = e.target;
-        setProductFormData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
+        setProductFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleImageChange = (e) => {
-        const files = Array.from(e.target.files);
-        setImages(files);
+        setNewImages(Array.from(e.target.files));
     };
 
     const handleSubmit = async (e) => {
@@ -61,47 +46,39 @@ const UpdateProductForm = ({ onUpdateSuccess, id, name, price, imagesArray, onCa
         setIsSuccess(false);
 
         try {
-            if (initialAuthToken) {
-                await signInWithCustomToken(auth, initialAuthToken);
-            } else {
-                await signInAnonymously(auth);
+            const resUpdate = await fetch(`/products/${productFormData.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: productFormData.name,
+                    price: parseFloat(productFormData.price)
+                })
+            });
+
+            if (!resUpdate.ok) {
+                const errData = await resUpdate.json();
+                throw new Error(errData.message || "Error updating product info");
             }
 
-            const userId = auth.currentUser?.uid;
-            if (!userId) {
-                throw new Error("Impossible d'obtenir l'ID de l'utilisateur.");
-            }
+            if (newImages.length > 0) {
+                const formData = new FormData();
+                newImages.forEach(file => formData.append("images", file));
 
-            let uploadedImageUrls = [];
-
-            if (images.length > 0) {
-                const uploadPromises = images.map(async (file) => {
-                    const storageRef = ref(storage, `products/${userId}/${file.name}`);
-                    await uploadBytes(storageRef, file);
-                    return getDownloadURL(storageRef);
+                const resImages = await fetch(`/products/${productFormData.id}/images`, {
+                    method: 'POST',
+                    body: formData
                 });
-                const urls = await Promise.all(uploadPromises);
-                uploadedImageUrls.push(...urls);
+
+                if (!resImages.ok) {
+                    const errData = await resImages.json();
+                    throw new Error(errData.message || "Error uploading images");
+                }
             }
-
-            const productDocRef = doc(db, `/artifacts/${platformAppId}/users/${userId}/products`, id);
-
-            const updateData = {
-                name: productFormData.name,
-                price: parseFloat(productFormData.price),
-                updatedAt: new Date().toISOString()
-            };
-
-            if (uploadedImageUrls.length > 0) {
-                updateData.images = uploadedImageUrls.map(url => ({ url }));
-            }
-
-            await updateDoc(productDocRef, updateData);
 
             setIsSuccess(true);
-            onUpdateSuccess();
+            onUpdateSuccess(); // déclenche le refresh
         } catch (err) {
-            console.error("Error while updating product: ", err);
+            console.error("Error while updating product:", err);
             setError(err.message);
         } finally {
             setIsLoading(false);
@@ -113,7 +90,7 @@ const UpdateProductForm = ({ onUpdateSuccess, id, name, price, imagesArray, onCa
             <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
                 <h2 className="text-3xl font-bold mb-6 text-center">Update product</h2>
 
-                {/* Messages de feedback */}
+                {/* Feedback */}
                 {isLoading && (
                     <div className="fixed inset-0 flex items-center justify-center z-[90]">
                         <div className="fixed inset-0 bg-white/50 backdrop-blur-sm"></div>
@@ -121,12 +98,13 @@ const UpdateProductForm = ({ onUpdateSuccess, id, name, price, imagesArray, onCa
                         <span className='loading loading-infinity loading-xl z-[100]'></span>
                     </div>
                 )}
-                {isSuccess && <p className="text-center text-green-500 mb-4">The updating was successful !</p>}
+                {isSuccess && <p className="text-center text-green-500 mb-4">The update was successful !</p>}
                 {error && <p className="text-center text-red-500 mb-4">Error : {error}</p>}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
                         <legend className="fieldset-legend">Updating Form</legend>
+
                         <label className="label">Name</label>
                         <input
                             id="name"
@@ -134,30 +112,55 @@ const UpdateProductForm = ({ onUpdateSuccess, id, name, price, imagesArray, onCa
                             name="name"
                             value={productFormData.name}
                             onChange={handleOnChange}
-                            className="input w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="input w-full p-3 border border-gray-300 rounded-lg"
                             required
                         />
-                        <label className="label mt-4">Prix</label>
+
+                        <label className="label mt-4">Price</label>
                         <input
                             id="price"
                             type="number"
                             name="price"
                             value={productFormData.price}
                             onChange={handleOnChange}
-                            className="input w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="input w-full p-3 border border-gray-300 rounded-lg"
                             required
                         />
-                        <label className="label mt-4">Images actuelles</label>
-                        <div className="flex flex-wrap gap-2 mb-4">
+
+                        <label className="label mt-4">Current images</label>
+                        <div onMouseEnter={SetDeleteImageHover(true)}
+                            onMouseLeave={SetDeleteImageHover(false)}
+                            className="flex flex-wrap gap-2 mb-4">
                             {productFormData.images.length > 0 ? (
                                 productFormData.images.map((image, index) => (
-                                    <img key={index} src={image.url} alt={`Produit ${index + 1}`} className="w-24 h-24 object-cover rounded-md border" />
+                                    <img key={index} src={image.url} alt={`Product ${index + 1}`} className="w-24 h-24 object-cover rounded-md border" />
                                 ))
                             ) : (
-                                <p className="text-gray-500 text-sm">Aucune image existante.</p>
+                                <p className="text-gray-500 text-sm">No images yet.</p>
                             )}
                         </div>
-                        <label className="label mt-4">Nouvelles images (remplaceront les précédentes)</label>
+                        <label className="label mt-4">Current images</label>
+
+                        <div className="flex gap-4 flex-wrap">
+                            {images?.map((img) => (
+                                <div key={img.id} onC className="relative w-32 h-32">
+                                    <img
+                                        src={img.url}
+                                        alt={img.altText}
+                                        className="w-full h-full object-cover rounded-lg"
+                                    />
+                                    <div> {deleteImageHover ? <button
+                                        type="button"
+                                        onClick={() => handleDeleteImage(img.id)}
+                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
+                                    >
+                                        ✕
+                                    </button>
+                                        : null} </div>
+                                </div>
+                            ))}
+                        </div>
+                        <label className="label mt-4">New images</label>
                         <input
                             id="images"
                             type="file"
@@ -167,17 +170,15 @@ const UpdateProductForm = ({ onUpdateSuccess, id, name, price, imagesArray, onCa
                             multiple
                         />
                     </fieldset>
+
                     <div className="flex gap-2 mt-4">
                         <button
                             type="submit"
                             disabled={isLoading}
                             className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-colors duration-200
-                                ${isLoading
-                                    ? 'bg-indigo-300 cursor-not-allowed'
-                                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                                }`}
+                                ${isLoading ? 'bg-indigo-300 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
                         >
-                            {isLoading ? 'Update in procss...' : 'Update product'}
+                            {isLoading ? 'Updating...' : 'Update product'}
                         </button>
                         <button
                             type="button"

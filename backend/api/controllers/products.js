@@ -3,7 +3,6 @@ const { fileTypeFromFile } = require('file-type/node');
 const fs = require('fs/promises');
 const { relative } = require('path');
 
-const admin = require('../services/firebase-admin-config.js');
 
 
 
@@ -199,92 +198,80 @@ exports.post_new_product = async (req, res, next) => {
 
 }
 
-exports.post_new_image_product = async (req, res, next) => {
-
+exports.post_new_image_product = async (req, res) => {
     const productId = parseInt(req.params.productId);
-
     const uploadedFiles = req.files;
 
     if (!uploadedFiles || uploadedFiles.length === 0) {
-        return res.status(400).json({ message: "Image files were not given." });
+        return res.status(400).json({ message: "No image files were uploaded." });
     }
 
     try {
-        // Récupérer le nom du produit une seule fois pour tous les fichiers
         const product = await prisma.product.findUnique({
             where: { id: productId }
         });
         if (!product) {
             return res.status(404).json({ message: "Product not found." });
         }
-        const productName = product.name.replace(/\s+/g, '_');
 
         const numberOfImages = await prisma.productImage.count({
-            where: { productId: productId }
-        })
-
-        if ((numberOfImages + uploadedFiles.length) > 5) {
-            return res.status(404).json({ message: "Products can only display 5 different images, please delete some current images to not exceed that number." })
+            where: { productId }
+        });
+        if (numberOfImages + uploadedFiles.length > 5) {
+            return res.status(400).json({ message: "Max 5 images per product." });
         }
 
-        // Créer un tableau de promesses pour chaque upload
-        const uploadPromises = uploadedFiles.map(async (uploadedFile) => {
-            // Validation du type de fichier
-            if (uploadedFile.mimetype !== 'image/jpeg' && uploadedFile.mimetype !== 'image/png') {
-                // Pour une seule image, on pourrait retourner une erreur ici.
-                // Pour plusieurs, on peut choisir d'ignorer le fichier ou de retourner une erreur pour tous.
-                // Ici, nous lançons une exception pour interrompre l'opération.
-                throw new Error('Type de fichier non supporté. Seules les images JPEG et PNG sont autorisées.');
-            }
+        const productName = product.name.replace(/\s+/g, '_');
 
-            const fileExtension = uploadedFile.mimetype.split('/')[1];
-            const fileName = `${productName}_${uuidv4()}.${fileExtension}`;
-            const bucket = getStorage().bucket();
-            const file = bucket.file(`products/${fileName}`);
+        const newProductImages = await Promise.all(
+            uploadedFiles.map(async (file) => {
+                if (file.mimetype !== 'image/jpeg' && file.mimetype !== 'image/png') {
+                    throw new Error("Only JPEG and PNG images are allowed.");
+                }
 
-            // Utiliser un "writable stream" pour uploader le fichier depuis le buffer
-            const fileStream = file.createWriteStream({
-                metadata: {
-                    contentType: uploadedFile.mimetype,
-                },
-            });
+                // Upload vers Cloudinary
+                const result = await cloudinary.uploader.upload_stream(
+                    {
+                        folder: "products", // les images seront dans un dossier "products" sur Cloudinary
+                        public_id: `${productName}_${uuidv4()}`,
+                        resource_type: "image",
+                    },
+                    (error, result) => {
+                        if (error) throw error;
+                        return result;
+                    }
+                );
 
-            // On peut aussi utiliser la méthode plus simple `file.save` si on a le buffer en mémoire.
-            // await file.save(uploadedFile.buffer, { contentType: uploadedFile.mimetype });
+                // Cloudinary nécessite un stream, donc on wrappe ça dans une Promise
+                const uploadResult = await new Promise((resolve, reject) => {
+                    const stream = cloudinary.uploader.upload_stream(
+                        {
+                            folder: "products",
+                            public_id: `${productName}_${uuidv4()}`,
+                            resource_type: "image",
+                        },
+                        (error, result) => {
+                            if (error) reject(error);
+                            else resolve(result);
+                        }
+                    );
+                    stream.end(file.buffer);
+                });
 
-            // On attend la fin de l'upload
-            await new Promise((resolve, reject) => {
-                fileStream.on('finish', resolve);
-                fileStream.on('error', reject);
-                fileStream.end(uploadedFile.buffer);
-            });
+                let { altText } = req.body;
+                if (!altText) {
+                    altText = `imageProduct-${productName}-${uuidv4().substring(0, 8)}`;
+                }
 
-            // Générer l'URL une fois l'upload terminé
-            const [url] = await file.getSignedUrl({
-                action: 'read',
-                expires: '03-09-2491',
-            });
-
-            // Gérer le texte alternatif
-            let { altText } = req.body;
-            if (!altText) {
-                altText = `imageProduct-${productName}-${uuidv4().substring(0, 8)}`; // Ajout d'un identifiant unique
-            }
-
-            // Créer une nouvelle entrée dans la base de données
-            const newProductImage = await prisma.productImage.create({
-                data: {
-                    url: url,
-                    altText: altText,
-                    productId: productId
-                },
-            });
-
-            return newProductImage;
-        });
-
-        // Exécuter toutes les promesses d'upload en parallèle
-        const newProductImages = await Promise.all(uploadPromises);
+                return prisma.productImage.create({
+                    data: {
+                        url: uploadResult.secure_url, // URL Cloudinary
+                        altText: altText,
+                        productId: productId
+                    }
+                });
+            })
+        );
 
         res.status(201).json({
             message: `${newProductImages.length} new product image(s) added!`,
@@ -292,60 +279,50 @@ exports.post_new_image_product = async (req, res, next) => {
         });
 
     } catch (error) {
-        console.error("Error during image upload:", error);
-        // Si une erreur se produit, nous renvoyons une seule erreur pour toutes les images
+        console.error("Error during Cloudinary upload:", error);
         res.status(500).json({ error: error.message });
     }
 };
-
-exports.delete_image_product = async (req, res, next) => {
+exports.delete_image_product = async (req, res) => {
     try {
         const productId = parseInt(req.params.productId);
         const imageId = parseInt(req.params.imageId);
 
         if (isNaN(productId) || isNaN(imageId)) {
-            return res.status(400).json({ message: 'Les IDs de produit et d\'image doivent être des nombres valides.' });
-
+            return res.status(400).json({ message: 'Invalid product or image ID.' });
         }
 
         const imageProductToDelete = await prisma.productImage.findUnique({
-            where: {
-                id: imageId,
-                productId: productId
-            }
+            where: { id: imageId }
         });
 
-        if (!imageProductToDelete) {
-            return res.status(404).json({ error: "Image not found for this product." })
+        if (!imageProductToDelete || imageProductToDelete.productId !== productId) {
+            return res.status(404).json({ error: "Image not found for this product." });
         }
 
         const imageUrl = imageProductToDelete.url;
 
-        const relativePath = imageUrl.split('api/uploads/')[1];
+        // Extraire le public_id depuis l'URL Cloudinary
+        const publicId = imageUrl.split('/').slice(-2).join('/').split('.')[0];
+        // ex: https://res.cloudinary.com/demo/image/upload/v1234567890/products/myfile_xxxx.png
+        // publicId = "products/myfile_xxxx"
+
+        // on supprime l'image sur Cloudinary dabord
+        await cloudinary.uploader.destroy(publicId);
+
+        // Supprime en db apres
         await prisma.productImage.delete({
             where: { id: imageId }
         });
 
-        console.log(relativePath);
+        res.status(204).send();
 
-        try {
-            await fs.unlink(`api/uploads/${relativePath}`);
-            res.status(204).send()
-        } catch (fileError) {
-            if (fileError.code !== 'ENOENT') {// si le code == ENOENT ça veut dire que le fichier/ la requête de l'objet n'a pas été trouvé
-                throw fileError;
-            }
-            console.warn(`Could not delete file: ${relativePath}. It may not exist.`);
-        }
-
-
+    } catch (error) {
+        console.error("Error deleting Cloudinary image:", error);
+        res.status(500).json({ error: error.message });
     }
-
-    catch (error) {
-        res.status(500).json({ error: error.message })
-    }
-
 };
+
 
 exports.delete_product = async (req, res, next) => {
 

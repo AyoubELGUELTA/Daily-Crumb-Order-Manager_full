@@ -8,9 +8,6 @@ const PasswordValidator = require('password-validator');
 
 const { sendVerificationEmail } = require('../services/emailServices.js');
 
-const admin = require('../services/firebase-admin-config.js');
-
-
 const schemaPassword = new PasswordValidator();
 
 schemaPassword
@@ -135,7 +132,6 @@ exports.user_verifyEmail = async (req, res, next) => {
                 }
             })
 
-            const firebaseCustomToken = await admin.auth().createCustomToken(user.id);
 
             const sessionToken = jwt.sign({
                 email: user.email,
@@ -154,7 +150,6 @@ exports.user_verifyEmail = async (req, res, next) => {
 
             return res.status(200).json({
                 message: "Email was successfully verified",
-                firebaseCustomToken: firebaseCustomToken
             })
         }
 
@@ -206,9 +201,6 @@ exports.user_login = async (req, res, next) => {
                 }, process.env.JWT_SESSION_SECRET,
                     { expiresIn: "2h" }
                 );
-
-                const firebaseCustomToken = await admin.auth().createCustomToken(checkUser.id.toString());
-
                 res.cookie('jwt', token, {
                     httpOnly: true, //prevents Javascript to access the cookie
                     secure: process.env.NODE_ENV === 'production', // N'envoie le cookie qu'en HTTPS en production
@@ -218,7 +210,6 @@ exports.user_login = async (req, res, next) => {
 
                 return res.status(200).json({
                     message: "Authentification successful",
-                    firebaseCustomToken: firebaseCustomToken
                 })
             }
 

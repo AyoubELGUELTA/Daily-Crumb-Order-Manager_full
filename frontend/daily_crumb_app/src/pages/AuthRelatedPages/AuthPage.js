@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthLoginForm from '../../components/users/AuthLoginForm';
 import AuthSignupForm from '../../components/users/AuthSignupForm';
-import { auth } from '../../firebase';
-import { signInWithCustomToken } from 'firebase/auth';
+
 
 const AuthPage = () => {
     const [signupStatus, setSignupStatus] = useState({
@@ -35,14 +34,6 @@ const AuthPage = () => {
             }
 
             console.log('Login successful:', data);
-
-            const firebaseCustomToken = data.firebaseCustomToken;
-            if (!firebaseCustomToken) {
-                throw new Error("Firebase custom token was not provided by the server.");
-            }
-
-            // Utilisez la fonction await pour vous assurer que la connexion est terminée avant de continuer
-            await signInWithCustomToken(auth, firebaseCustomToken);
 
             setLoadingAttemptMessage("Connexion réussie !");
             setIsLoading(false);
@@ -125,4 +116,4 @@ const AuthPage = () => {
     );
 };
 
-export default AuthPage;
+export default AuthPage;    

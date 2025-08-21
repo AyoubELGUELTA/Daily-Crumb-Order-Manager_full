@@ -4,9 +4,10 @@ import UpdateProductForm from './UpdateProductForm';
 
 const CardList = () => {
   const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [prefilledInfoEditProduct, setPreffiledInfoEditProduct] = useState({
+  const [needRefresh, SetNeedRefresh] = useState(true);
+  const [prefilledInfoEditProduct, setPrefilledInfoEditProduct] = useState({
     id: "",
     name: "",
     price: "",
@@ -15,8 +16,11 @@ const CardList = () => {
 
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (needRefresh) {
+      fetchProducts();
+      SetNeedRefresh(false)
+    }
+  }, [needRefresh]);
 
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -66,7 +70,7 @@ const CardList = () => {
       if (!res.ok) {
         throw new Error(data.message || 'Error fetching product current infos');
       }
-      setPreffiledInfoEditProduct({
+      setPrefilledInfoEditProduct({
         id: data.product.id,
         name: data.product.name,
         price: data.product.price,
@@ -160,7 +164,7 @@ const CardList = () => {
   };
 
   const handleClosingUpdateForm = () => {
-    setPreffiledInfoEditProduct({
+    setPrefilledInfoEditProduct({
       id: "",
       name: "",
       price: "",
@@ -168,9 +172,39 @@ const CardList = () => {
     })
   }
 
-  const handleSubmitingGeneralData = () => {
+
+  const handleSuccessUpdating = () => {
+    handleClosingUpdateForm();
+    SetNeedRefresh(true);
 
   }
+
+  const handleDeleteImage = async (imageId) => {
+    try {
+      const res = await fetch(
+        `/api/products/${prefilledInfoEditProduct.id}/images/${imageId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Error supressing image (probably from internal server).");
+      }
+
+      setPrefilledInfoEditProduct((prev) => ({
+        ...prev,
+        images: prev.images.filter((img) => img.id !== imageId),
+      }));
+    } catch (err) {
+      console.error("Error supressing image:", err);
+    }
+  };
+
+
 
 
 
@@ -183,7 +217,7 @@ const CardList = () => {
       {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center z-[90]">
           <div className="fixed inset-0 bg-white/50 backdrop-blur-sm"></div>
-          <p className="text-center text-blue-500 mb-4 z-[100]">Please wait...</p>
+          <p className="text-center text-blue-500 mb-4 z-[100]"></p>
           <span className='loading loading-infinity loading-xl z-[100]'></span>
         </div>
       )}
@@ -222,12 +256,14 @@ const CardList = () => {
         <p>No products found.</p>
       )}
 
-      {prefilledInfoEditProduct ? <div><UpdateProductForm
+      {prefilledInfoEditProduct.id ? <div><UpdateProductForm
+        id={prefilledInfoEditProduct.id}
         name={prefilledInfoEditProduct.name}
         price={prefilledInfoEditProduct.price}
         images={prefilledInfoEditProduct.images}
-        onUpdateSuccess={handleClosingUpdateForm}
-        onCancel={handleClosingUpdateForm} /></div>
+        onUpdateSuccess={handleSuccessUpdating}
+        onCancel={handleClosingUpdateForm}
+        handleDeleteImage={handleDeleteImage} /></div>
         : null}
     </div>
 
