@@ -2,6 +2,15 @@ const prisma = require('../../prismaClient.js');
 const { fileTypeFromFile } = require('file-type/node');
 const fs = require('fs/promises');
 const { relative } = require('path');
+const { v2: cloudinary } = require('cloudinary');
+const { v4: uuidv4 } = require('uuid');
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 
 
 

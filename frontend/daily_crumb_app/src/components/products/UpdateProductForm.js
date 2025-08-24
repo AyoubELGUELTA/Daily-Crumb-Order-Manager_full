@@ -62,7 +62,7 @@ const UpdateProductForm = ({ handleDeleteImage, onUpdateSuccess, id, name, price
 
             if (newImages.length > 0) {
                 const formData = new FormData();
-                newImages.forEach(file => formData.append("images", file));
+                newImages.forEach(file => formData.append("productImages", file));
 
                 const resImages = await fetch(`/products/${productFormData.id}/images`, {
                     method: 'POST',
@@ -71,7 +71,7 @@ const UpdateProductForm = ({ handleDeleteImage, onUpdateSuccess, id, name, price
 
                 if (!resImages.ok) {
                     const errData = await resImages.json();
-                    throw new Error(errData.message || "Error uploading images");
+                    throw new Error(errData.error || errData.message || "Error uploading images");
                 }
             }
 
@@ -127,39 +127,37 @@ const UpdateProductForm = ({ handleDeleteImage, onUpdateSuccess, id, name, price
                             required
                         />
 
+
                         <label className="label mt-4">Current images</label>
-                        <div onMouseEnter={SetDeleteImageHover(true)}
-                            onMouseLeave={SetDeleteImageHover(false)}
-                            className="flex flex-wrap gap-2 mb-4">
-                            {productFormData.images.length > 0 ? (
-                                productFormData.images.map((image, index) => (
-                                    <img key={index} src={image.url} alt={`Product ${index + 1}`} className="w-24 h-24 object-cover rounded-md border" />
+                        <div
+                            onMouseEnter={() => SetDeleteImageHover(true)}
+                            onMouseLeave={() => SetDeleteImageHover(false)}
+                            className="flex gap-4 flex-wrap"
+                        >
+                            {images && images.length > 0 ? (
+                                images.map((img) => (
+                                    <div key={img.id} className="relative w-32 h-32">
+                                        <img
+                                            src={img.url}
+                                            alt={img.altText}
+                                            className="w-full h-full object-cover rounded-lg"
+                                        />
+                                        {deleteImageHover && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteImage(img.id)}
+                                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
                                 ))
                             ) : (
                                 <p className="text-gray-500 text-sm">No images yet.</p>
                             )}
                         </div>
-                        <label className="label mt-4">Current images</label>
 
-                        <div className="flex gap-4 flex-wrap">
-                            {images?.map((img) => (
-                                <div key={img.id} onC className="relative w-32 h-32">
-                                    <img
-                                        src={img.url}
-                                        alt={img.altText}
-                                        className="w-full h-full object-cover rounded-lg"
-                                    />
-                                    <div> {deleteImageHover ? <button
-                                        type="button"
-                                        onClick={() => handleDeleteImage(img.id)}
-                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
-                                    >
-                                        ✕
-                                    </button>
-                                        : null} </div>
-                                </div>
-                            ))}
-                        </div>
                         <label className="label mt-4">New images</label>
                         <input
                             id="images"
