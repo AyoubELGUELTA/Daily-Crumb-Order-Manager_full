@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import UpdateCard from './UpdateCard';
 import UpdateProductForm from './UpdateProductForm';
+import SearchBar from '../SearchBar';
 
 const CardList = () => {
   const [products, setProducts] = useState([]);
@@ -79,6 +80,7 @@ const CardList = () => {
     } catch (err) {
       setError(err.message);
     } finally {
+      SetNeedRefresh(true);
       setIsLoading(false);
     }
   }
@@ -170,7 +172,10 @@ const CardList = () => {
       price: "",
       images: []
     })
+    SetNeedRefresh(true);
+
   }
+
 
 
   const handleSuccessUpdating = () => {
@@ -182,7 +187,7 @@ const CardList = () => {
   const handleDeleteImage = async (imageId) => {
     try {
       const res = await fetch(
-        `/api/products/${prefilledInfoEditProduct.id}/images/${imageId}`,
+        `/products/${prefilledInfoEditProduct.id}/images/${imageId}`,
         {
           method: "DELETE",
           headers: {
@@ -204,8 +209,37 @@ const CardList = () => {
     }
   };
 
+  const handleSearchInput = async (textInput) => {
+    setIsLoading(true);
+    setError('');
 
+    try {
 
+      if (textInput === "") {
+        SetNeedRefresh(true);
+        return
+      }
+      const res = await fetch(`/products?name=${encodeURIComponent(textInput)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Error fetching products');
+      }
+      setProducts(data.products);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
   return (
@@ -213,6 +247,8 @@ const CardList = () => {
 
     <div className="flex flex-wrap gap-4">
       <h2 className="text-3xl font-bold mb-6 text-center">Products managing</h2>
+
+      <SearchBar onSearchChange={handleSearchInput} />
 
       {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center z-[90]">
@@ -234,9 +270,7 @@ const CardList = () => {
         </div>
 
       )}
-      {
 
-      }
 
       {products.length > 0 ? (
         products.map(product => (

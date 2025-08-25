@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import CardList from "../../components/products/CardList";
 import NavBar from "../../components/navigation/NavBar";
-import SearchBar from "../../components/SearchBar";
 
 const UpdateProducts = () => {
     const [isNavOpen, setIsNavOpen] = useState(false);
@@ -17,7 +16,6 @@ const UpdateProducts = () => {
                     }`}
             >
                 <div className="flex flex-col items-center space-y-8">
-                    <SearchBar />
                     <CardList />
                 </div>
             </div>

@@ -216,6 +216,7 @@ exports.post_new_image_product = async (req, res) => {
     }
 
     try {
+        // Vérifier que le produit existe
         const product = await prisma.product.findUnique({
             where: { id: productId }
         });
@@ -223,6 +224,7 @@ exports.post_new_image_product = async (req, res) => {
             return res.status(404).json({ message: "Product not found." });
         }
 
+        // Vérifier la limite de 5 images
         const numberOfImages = await prisma.productImage.count({
             where: { productId }
         });
@@ -230,28 +232,15 @@ exports.post_new_image_product = async (req, res) => {
             return res.status(400).json({ message: "Max 5 images per product." });
         }
 
-        const productName = product.name.replace(/\s+/g, '_');
+        const productName = product.name.replace(/\s+/g, "_");
 
         const newProductImages = await Promise.all(
             uploadedFiles.map(async (file) => {
-                if (file.mimetype !== 'image/jpeg' && file.mimetype !== 'image/png') {
-                    throw new Error("Only JPEG and PNG images are allowed.");
+                if (file.mimetype !== "image/jpeg" && file.mimetype !== "image/png") {
+                    throw new Error("Only JPG/JPEG or PNG image files are allowed.");
                 }
 
-                // Upload vers Cloudinary
-                const result = await cloudinary.uploader.upload_stream(
-                    {
-                        folder: "products", // les images seront dans un dossier "products" sur Cloudinary
-                        public_id: `${productName}_${uuidv4()}`,
-                        resource_type: "image",
-                    },
-                    (error, result) => {
-                        if (error) throw error;
-                        return result;
-                    }
-                );
-
-                // Cloudinary nécessite un stream, donc on wrappe ça dans une Promise
+                // Upload Cloudinary avec une vraie Promise
                 const uploadResult = await new Promise((resolve, reject) => {
                     const stream = cloudinary.uploader.upload_stream(
                         {
@@ -264,34 +253,39 @@ exports.post_new_image_product = async (req, res) => {
                             else resolve(result);
                         }
                     );
-                    stream.end(file.buffer);
+                    stream.end(file.buffer); // envoie le buffer à Cloudinary
                 });
 
+                // altText généré si pas fourni
                 let { altText } = req.body;
                 if (!altText) {
                     altText = `imageProduct-${productName}-${uuidv4().substring(0, 8)}`;
                 }
 
+                // Sauvegarde en DB
                 return prisma.productImage.create({
                     data: {
-                        url: uploadResult.secure_url, // URL Cloudinary
+                        url: uploadResult.secure_url,
                         altText: altText,
-                        productId: productId
-                    }
+                        productId: productId,
+                    },
                 });
             })
         );
 
         res.status(201).json({
             message: `${newProductImages.length} new product image(s) added!`,
-            images: newProductImages.map(img => ({ url: img.url, altText: img.altText }))
+            images: newProductImages.map((img) => ({
+                url: img.url,
+                altText: img.altText,
+            })),
         });
-
     } catch (error) {
         console.error("Error during Cloudinary upload:", error);
         res.status(500).json({ error: error.message });
     }
 };
+
 exports.delete_image_product = async (req, res) => {
     try {
         const productId = parseInt(req.params.productId);
@@ -334,10 +328,8 @@ exports.delete_image_product = async (req, res) => {
 
 
 exports.delete_product = async (req, res, next) => {
-
     try {
-
-        const productId = parseInt(req.params.productId)
+        const productId = parseInt(req.params.productId);
 
         if (isNaN(productId)) {
             return res.status(400).json({
@@ -345,48 +337,48 @@ exports.delete_product = async (req, res, next) => {
             });
         }
 
+        // Vérifier si le produit existe
         const productToDelete = await prisma.product.findUnique({
             where: { id: productId }
-        })
+        });
 
         if (!productToDelete) {
-            return res.status(404).json({ error: `Product with ID ${productId} not found.` })
-        };
-
-        const imagesToDelete = await prisma.productImage.findMany({
-            where: { productId: productId }
-        });
-
-
-        let imageUrl = null;
-
-        let relativePath = null;
-
-        for (image of imagesToDelete) {
-            imageUrl = image.url;
-
-            relativePath = imageUrl.split('api/uploads/')[1]
-
-            await fs.unlink(`api/uploads/${relativePath}`)
+            return res.status(404).json({ error: `Product with ID ${productId} not found.` });
         }
 
-        await prisma.product.delete({
-            where: {
-                id: productId,
-            },
+        // Récupérer toutes les images liées
+        const imagesToDelete = await prisma.productImage.findMany({
+            where: { productId }
         });
 
+        // Supprimer les images de Cloudinary
+        for (const image of imagesToDelete) {
+            const imageUrl = image.url;
+            // Extraire le public_id Cloudinary (ex: "products/myfile_xxxx")
+            const publicId = imageUrl.split('/').slice(-2).join('/').split('.')[0];
 
+            try {
+                await cloudinary.uploader.destroy(publicId);
+            } catch (err) {
+                console.error(`Erreur suppression Cloudinary image ${publicId}:`, err);
+            }
+        }
+
+        await prisma.productImage.deleteMany({
+            where: { productId }
+        });
+
+        await prisma.product.delete({
+            where: { id: productId }
+        });
 
         res.status(204).send();
-
+    } catch (error) {
+        console.error("Error deleting product:", error);
+        res.status(500).json({ error: error.message });
     }
-
-    catch (error) {
-        res.status(500).json({ error: error.message })
-    };
-
 };
+
 
 
 exports.update_product = async (req, res, next) => {

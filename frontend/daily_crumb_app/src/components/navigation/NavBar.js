@@ -27,6 +27,13 @@ const NavBar = ({ isOpen, setIsOpen }) => {
         }
     }, [isOpen]);
 
+
+    useEffect(() => {
+        if (isAddMenuOpen || isDeleteMenuOpen || isUpdateMenuOpen) {
+            setIsOpen(true);
+
+        }
+    }, [isAddMenuOpen, isDeleteMenuOpen, isUpdateMenuOpen, setIsOpen])
     return (
         <div
             className={`bg-gray-800 text-white flex flex-col transition-all duration-300 ${isOpen ? "w-64" : "w-16"

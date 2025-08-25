@@ -6,7 +6,17 @@ const SearchBar = ({
     onSearchChange,
     filterFields // un ReactNode (inputs, selects...) passé en props
 }) => {
+
     const [isFiltering, setIsFiltering] = useState(false);
+    const [searchValue, setSearchValue] = useState("");
+
+    const handleInputChange = (e) => {
+        const value = e.target.value;
+        setSearchValue(value);
+        if (onSearchChange) {
+            onSearchChange(value);
+        }
+    };
 
     return (
         <div className="w-full max-w-lg mx-auto">
@@ -14,8 +24,9 @@ const SearchBar = ({
             <div className="flex items-center">
                 <input
                     type="text"
+                    value={searchValue}
                     placeholder={placeholder}
-                    onChange={onSearchChange}
+                    onChange={handleInputChange}
                     className="flex-1 px-4 py-3 border-2 border-black rounded-l-2xl text-lg focus:outline-none focus:ring-2 focus:ring-black"
                 />
 
