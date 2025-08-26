@@ -20,107 +20,93 @@ exports.get_product = async (req, res, next) => {
 
     let whereClause = {};
 
-    if (name && name.trim() !== '') {
-        whereClause.name = {
-            contains: name,
-            mode: 'insensitive' // This makes the search case-insensitive
-
-        }
-    }
-
-
-
+    // --- Gestion prix min ---
     if (priceGte) {
-
         const parsedPriceGte = parseInt(priceGte);
 
-
-        if ((!Number.isInteger(parsedPriceGte))) {
-            return res.status(400).json({ message: "Your lowest price constraint is not a valid number." })
-        }
-        else {
-            if (!whereClause.price) {
-                whereClause.price = {};
-            }
-
+        if (!Number.isInteger(parsedPriceGte)) {
+            return res.status(400).json({ message: "Your lowest price constraint is not a valid number." });
+        } else {
+            if (!whereClause.price) whereClause.price = {};
             whereClause.price.gte = parsedPriceGte;
         }
-
     }
 
+    // --- Gestion prix max ---
     if (priceLt) {
-
         const parsedPriceLt = parseInt(priceLt);
 
         if (!Number.isInteger(parsedPriceLt)) {
-            return res.status(400).json({ message: "Your highest price constraint is not a valid number." })
-        }
-        else {
-            if (!whereClause.price) {
-                whereClause.price = {};
-            }
-
+            return res.status(400).json({ message: "Your highest price constraint is not a valid number." });
+        } else {
+            if (!whereClause.price) whereClause.price = {};
             whereClause.price.lte = parsedPriceLt;
-
         }
     }
 
-
-
-
-
-
     try {
+        let products;
 
-        const products = await prisma.product.findMany({
+        if (name && name.trim() !== '') {
+            // --- Recherche souple (ignore casse et espaces) ---
+            const normalizedSearch = name.replace(/\s+/g, '').toLowerCase();
 
-            where:
-                whereClause
-            ,
-            include: {
-                images: {
-                    select: {
-                        id: true,
-                        url: true,
-                        altText: true
+            products = await prisma.$queryRaw`
+                SELECT p.id, p.name, p.price, p.inStock,
+                       JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'url', i.url, 'altText', i.altText)) as images
+                FROM Product p
+                LEFT JOIN ProductImage i ON i.productId = p.id
+                WHERE REPLACE(LOWER(p.name), ' ', '') LIKE ${'%' + normalizedSearch + '%'}
+                GROUP BY p.id, p.name, p.price, p.inStock
+            `;
+        } else {
+            // --- Cas sans filtre name : on utilise Prisma ---
+            products = await prisma.product.findMany({
+                where: whereClause,
+                include: {
+                    images: {
+                        select: {
+                            id: true,
+                            url: true,
+                            altText: true
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
-        if (products.length === 0) {
+        if (!products || products.length === 0) {
             return res.status(404).json({ message: "No products found matching the criteria (or no products in the DB)." });
         }
 
+        // --- Mise en forme uniforme ---
         const response = {
             total: products.length,
-            products:
-                products.map(product => ({
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    inStock: product.inStock,
-                    images: product.images.map(image => ({
-                        id: image.id,
-                        url: image.url
-                    })),
-                    request: {
-                        type: 'GET',
-                        url: process.env.BASE_URL + '/products/' + product.id
-                    }
-                })
-                )
-
+            products: products.map(product => ({
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                inStock: product.inStock,
+                images: product.images
+                    ? (Array.isArray(product.images)
+                        ? product.images
+                        : JSON.parse(product.images)) // si ça vient du raw SQL
+                    : [],
+                request: {
+                    type: 'GET',
+                    url: process.env.BASE_URL + '/products/' + product.id
+                }
+            }))
         };
 
-        res.status(200).json(response)
-    }
-
-    catch (error) {
-        console.log(error);
+        res.status(200).json(response);
+    } catch (error) {
+        console.error(error);
         res.status(500).json({ error: error.message });
     }
 };
+
+
 
 
 exports.get_single_product = async (req, res, next) => {

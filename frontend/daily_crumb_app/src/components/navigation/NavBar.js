@@ -85,16 +85,16 @@ const NavBar = ({ isOpen, setIsOpen }) => {
                             }`}
                     >
                         <Link
-                            to="/add/product"
+                            to="/add/products"
                             className="block py-2 pl-12 pr-4 hover:bg-gray-700 rounded-lg"
                         >
                             Product
                         </Link>
                         <Link
-                            to="/add/category"
+                            to="/add/orders"
                             className="block py-2 pl-12 pr-4 hover:bg-gray-700 rounded-lg"
                         >
-                            Category
+                            Order
                         </Link>
                     </div>
                 </div>

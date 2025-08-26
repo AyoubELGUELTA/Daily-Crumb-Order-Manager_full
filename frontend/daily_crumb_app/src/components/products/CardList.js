@@ -211,7 +211,6 @@ const CardList = () => {
 
   const handleSearchInput = async (textInput) => {
     setIsLoading(true);
-    setError('');
 
     try {
 
@@ -234,8 +233,13 @@ const CardList = () => {
         throw new Error(data.message || 'Error fetching products');
       }
       setProducts(data.products);
+
     } catch (err) {
-      setError(err.message);
+      if (err.message === "No products found matching the criteria (or no products in the DB).") {
+        setProducts([]);
+        return;
+      }
+      console.log(err);
     } finally {
       setIsLoading(false);
     }

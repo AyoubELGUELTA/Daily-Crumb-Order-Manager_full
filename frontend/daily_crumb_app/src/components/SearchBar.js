@@ -1,26 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SearchBar = ({
     placeholder = "Search...",
     onSearchChange,
-    filterFields // un ReactNode (inputs, selects...) passé en props
+    filterFields
 }) => {
-
-    const [isFiltering, setIsFiltering] = useState(false);
     const [searchValue, setSearchValue] = useState("");
+    const [isFiltering, setIsFiltering] = useState(false);
+
+    // useRef pour stocker la dernière valeur recherchée sans déclencher de rendu
+    const lastFetchedValue = useRef("");
+
+    useEffect(() => {
+        // Condition pour arrêter si la valeur est vide
+        if (searchValue.trim() === "") {
+            // Optionnel : on peut vouloir vider les résultats
+            if (lastFetchedValue.current !== "") {
+                onSearchChange("");
+                lastFetchedValue.current = "";
+            }
+            return;
+        }
+
+        // Si la valeur actuelle est la même que la dernière valeur recherchée, on arrête
+        if (searchValue === lastFetchedValue.current) {
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            // onSearchChange est appelé seulement si la valeur a réellement changé
+            onSearchChange(searchValue);
+            lastFetchedValue.current = searchValue;
+        }, 500);
+
+        return () => clearTimeout(timeout);
+    }, [searchValue, onSearchChange]);
 
     const handleInputChange = (e) => {
-        const value = e.target.value;
-        setSearchValue(value);
-        if (onSearchChange) {
-            onSearchChange(value);
-        }
+        setSearchValue(e.target.value);
     };
 
     return (
         <div className="w-full max-w-lg mx-auto">
-            {/* Search bar + bouton filter */}
             <div className="flex items-center">
                 <input
                     type="text"
@@ -42,7 +64,6 @@ const SearchBar = ({
                 </button>
             </div>
 
-            {/* Panel de filtres animé */}
             <AnimatePresence>
                 {isFiltering && (
                     <motion.div
