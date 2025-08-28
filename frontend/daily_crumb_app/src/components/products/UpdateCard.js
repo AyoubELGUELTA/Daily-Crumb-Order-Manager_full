@@ -103,7 +103,7 @@ const UpdateCard = ({
 
                 <div className='mt-4 flex justify-between self-end w-full'>
                     <div className="badge badge-soft badge-primary">
-                        {productPrice}
+                        {productPrice} €
                     </div>
 
                     {productInStock ?

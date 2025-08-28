@@ -2,24 +2,28 @@ import React, { useEffect, useState } from 'react';
 import UpdateCard from './UpdateCard';
 import UpdateProductForm from './UpdateProductForm';
 import SearchBar from '../SearchBar';
+import PriceFilter from '../PriceFilter';
+
 
 const CardList = () => {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [needRefresh, SetNeedRefresh] = useState(true);
+  const [needRefresh, setNeedRefresh] = useState(true);
+  const [needFilterRefresh, setNeedFilterRefresh] = useState(false);
   const [prefilledInfoEditProduct, setPrefilledInfoEditProduct] = useState({
     id: "",
     name: "",
     price: "",
     images: []
   })
+  const [priceRange, setPriceRange] = useState([0, 200]);
 
 
   useEffect(() => {
     if (needRefresh) {
       fetchProducts();
-      SetNeedRefresh(false)
+      setNeedRefresh(false)
     }
   }, [needRefresh]);
 
@@ -80,7 +84,7 @@ const CardList = () => {
     } catch (err) {
       setError(err.message);
     } finally {
-      SetNeedRefresh(true);
+      setNeedRefresh(true);
       setIsLoading(false);
     }
   }
@@ -172,7 +176,7 @@ const CardList = () => {
       price: "",
       images: []
     })
-    SetNeedRefresh(true);
+    setNeedRefresh(true);
 
   }
 
@@ -180,7 +184,7 @@ const CardList = () => {
 
   const handleSuccessUpdating = () => {
     handleClosingUpdateForm();
-    SetNeedRefresh(true);
+    setNeedRefresh(true);
 
   }
 
@@ -212,20 +216,27 @@ const CardList = () => {
   const handleSearchInput = async (textInput) => {
     setIsLoading(true);
 
-    try {
+    const params = new URLSearchParams();
 
-      if (textInput === "") {
-        SetNeedRefresh(true);
-        return
-      }
-      const res = await fetch(`/products?name=${encodeURIComponent(textInput)}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+    if (textInput) {
+      params.append("name", textInput);
+    }
+
+    if (priceRange[0] !== undefined) {
+      params.append("priceGte", priceRange[0]);
+    }
+
+    if (priceRange[1] !== undefined) {
+      params.append("priceLt", priceRange[1]);
+    }
+
+    try {
+      const res = await fetch(`/products?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
         }
-      )
+      });
 
       const data = await res.json();
 
@@ -242,6 +253,7 @@ const CardList = () => {
       console.log(err);
     } finally {
       setIsLoading(false);
+      setNeedFilterRefresh(false)
     }
   };
 
@@ -252,7 +264,19 @@ const CardList = () => {
     <div className="flex flex-wrap gap-4">
       <h2 className="text-3xl font-bold mb-6 text-center">Products managing</h2>
 
-      <SearchBar onSearchChange={handleSearchInput} />
+      <SearchBar
+        onSearchChange={handleSearchInput}
+        needFilterRefresh={needFilterRefresh}
+        setNeedFilterRefresh={setNeedFilterRefresh}
+        filterFields={
+          <PriceFilter
+            priceRange={priceRange}
+            setPriceRange={setPriceRange}
+            needFilterRefresh={needFilterRefresh}
+            setNeedFilterRefresh={setNeedFilterRefresh}
+          />
+        }
+      />
 
       {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center z-[90]">

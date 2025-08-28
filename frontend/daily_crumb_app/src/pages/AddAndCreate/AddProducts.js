@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import AddProductsForm from '../../components/products/AddProductsForm';
 
 const AddProducts = () => {

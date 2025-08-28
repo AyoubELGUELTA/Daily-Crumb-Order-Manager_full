@@ -4,38 +4,32 @@ import { motion, AnimatePresence } from 'framer-motion';
 const SearchBar = ({
     placeholder = "Search...",
     onSearchChange,
-    filterFields
+    filterFields,
+    needFilterRefresh,
+    setNeedFilterRefresh
 }) => {
     const [searchValue, setSearchValue] = useState("");
     const [isFiltering, setIsFiltering] = useState(false);
-
-    // useRef pour stocker la dernière valeur recherchée sans déclencher de rendu
     const lastFetchedValue = useRef("");
 
     useEffect(() => {
-        // Condition pour arrêter si la valeur est vide
-        if (searchValue.trim() === "") {
-            // Optionnel : on peut vouloir vider les résultats
-            if (lastFetchedValue.current !== "") {
-                onSearchChange("");
-                lastFetchedValue.current = "";
-            }
-            return;
-        }
-
-        // Si la valeur actuelle est la même que la dernière valeur recherchée, on arrête
-        if (searchValue === lastFetchedValue.current) {
-            return;
-        }
-
         const timeout = setTimeout(() => {
-            // onSearchChange est appelé seulement si la valeur a réellement changé
-            onSearchChange(searchValue);
-            lastFetchedValue.current = searchValue;
-        }, 500);
+            if (searchValue !== lastFetchedValue.current) {
+                onSearchChange(searchValue);
+                lastFetchedValue.current = searchValue;
+            }
+        }, 300);
 
         return () => clearTimeout(timeout);
     }, [searchValue, onSearchChange]);
+
+    useEffect(() => {
+        if (needFilterRefresh) {
+            onSearchChange(searchValue);
+            lastFetchedValue.current = searchValue;
+            setNeedFilterRefresh(false);
+        }
+    }, [needFilterRefresh, searchValue, onSearchChange, setNeedFilterRefresh]);
 
     const handleInputChange = (e) => {
         setSearchValue(e.target.value);
@@ -51,7 +45,6 @@ const SearchBar = ({
                     onChange={handleInputChange}
                     className="flex-1 px-4 py-3 border-2 border-black rounded-l-2xl text-lg focus:outline-none focus:ring-2 focus:ring-black"
                 />
-
                 <button
                     type="button"
                     onClick={() => setIsFiltering(!isFiltering)}

@@ -20,7 +20,12 @@ exports.get_product = async (req, res, next) => {
 
     let whereClause = {};
 
-    // --- Gestion prix min ---
+    if (name && name.trim() !== "") {
+        whereClause.name = {
+            contains: name,
+        };
+    }
+
     if (priceGte) {
         const parsedPriceGte = parseInt(priceGte);
 
@@ -32,7 +37,6 @@ exports.get_product = async (req, res, next) => {
         }
     }
 
-    // --- Gestion prix max ---
     if (priceLt) {
         const parsedPriceLt = parseInt(priceLt);
 
@@ -45,41 +49,23 @@ exports.get_product = async (req, res, next) => {
     }
 
     try {
-        let products;
-
-        if (name && name.trim() !== '') {
-            // --- Recherche souple (ignore casse et espaces) ---
-            const normalizedSearch = name.replace(/\s+/g, '').toLowerCase();
-
-            products = await prisma.$queryRaw`
-                SELECT p.id, p.name, p.price, p.inStock,
-                       JSON_ARRAYAGG(JSON_OBJECT('id', i.id, 'url', i.url, 'altText', i.altText)) as images
-                FROM Product p
-                LEFT JOIN ProductImage i ON i.productId = p.id
-                WHERE REPLACE(LOWER(p.name), ' ', '') LIKE ${'%' + normalizedSearch + '%'}
-                GROUP BY p.id, p.name, p.price, p.inStock
-            `;
-        } else {
-            // --- Cas sans filtre name : on utilise Prisma ---
-            products = await prisma.product.findMany({
-                where: whereClause,
-                include: {
-                    images: {
-                        select: {
-                            id: true,
-                            url: true,
-                            altText: true
-                        }
+        const products = await prisma.product.findMany({
+            where: whereClause,
+            include: {
+                images: {
+                    select: {
+                        id: true,
+                        url: true,
+                        altText: true
                     }
                 }
-            });
-        }
+            }
+        });
 
         if (!products || products.length === 0) {
             return res.status(404).json({ message: "No products found matching the criteria (or no products in the DB)." });
         }
 
-        // --- Mise en forme uniforme ---
         const response = {
             total: products.length,
             products: products.map(product => ({
@@ -87,14 +73,10 @@ exports.get_product = async (req, res, next) => {
                 name: product.name,
                 price: product.price,
                 inStock: product.inStock,
-                images: product.images
-                    ? (Array.isArray(product.images)
-                        ? product.images
-                        : JSON.parse(product.images)) // si ça vient du raw SQL
-                    : [],
+                images: product.images ?? [],
                 request: {
-                    type: 'GET',
-                    url: process.env.BASE_URL + '/products/' + product.id
+                    type: "GET",
+                    url: process.env.BASE_URL + "/products/" + product.id
                 }
             }))
         };
@@ -105,6 +87,7 @@ exports.get_product = async (req, res, next) => {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 
 
