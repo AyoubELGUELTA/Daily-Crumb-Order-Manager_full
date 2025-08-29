@@ -2,9 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthLoginForm from '../../components/users/AuthLoginForm';
 import AuthSignupForm from '../../components/users/AuthSignupForm';
+import NavBar from '../../components/navigation/NavBar';
+
 
 
 const AuthPage = () => {
+    const [isOpen, setIsOpen] = useState(false); // for NavBar
+
     const [signupStatus, setSignupStatus] = useState({
         isPosted: false,
         message: null
@@ -92,6 +96,8 @@ const AuthPage = () => {
 
     return (
         <div className="flex flex-col md:flex-row justify-center items-start space-y-100 md:space-y-3 md:space-x-250 p-4 bg-gray-100 min-h-screen">
+            <NavBar isOpen={isOpen} setIsOpen={setIsOpen} />
+
             <AuthLoginForm loginHandler={loginHandler} />
             <AuthSignupForm signupHandler={signupHandler} />
 

@@ -13,12 +13,10 @@ import {
 } from "@heroicons/react/24/outline";
 
 const NavBar = ({ isOpen, setIsOpen }) => {
-    // État des menus déroulants
     const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
     const [isUpdateMenuOpen, setIsUpdateMenuOpen] = useState(false);
     const [isDeleteMenuOpen, setIsDeleteMenuOpen] = useState(false);
 
-    // Fermer les sous-menus si la nav est refermée
     useEffect(() => {
         if (!isOpen) {
             setIsAddMenuOpen(false);
@@ -27,13 +25,12 @@ const NavBar = ({ isOpen, setIsOpen }) => {
         }
     }, [isOpen]);
 
-
     useEffect(() => {
         if (isAddMenuOpen || isDeleteMenuOpen || isUpdateMenuOpen) {
             setIsOpen(true);
-
         }
-    }, [isAddMenuOpen, isDeleteMenuOpen, isUpdateMenuOpen, setIsOpen])
+    }, [isAddMenuOpen, isDeleteMenuOpen, isUpdateMenuOpen, setIsOpen]);
+
     return (
         <div
             className={`bg-gray-800 text-white flex flex-col transition-all duration-300 ${isOpen ? "w-64" : "w-16"
@@ -51,8 +48,10 @@ const NavBar = ({ isOpen, setIsOpen }) => {
                 )}
             </button>
 
-            {/* NAVIGATION */}
-            <nav className="flex flex-col flex-1 gap-2 p-2">
+            {/* NAVIGATION avec scroll custom */}
+            <nav
+                className="flex flex-col flex-1 gap-2 p-2 overflow-y-auto custom-scrollbar"
+            >
                 {/* HOME */}
                 <Link
                     to="/homeCooking"
@@ -96,6 +95,12 @@ const NavBar = ({ isOpen, setIsOpen }) => {
                         >
                             Order
                         </Link>
+                        <Link
+                            to="/add/clients"
+                            className="block py-2 pl-12 pr-4 hover:bg-gray-700 rounded-lg"
+                        >
+                            Clients
+                        </Link>
                     </div>
                 </div>
 
@@ -119,10 +124,10 @@ const NavBar = ({ isOpen, setIsOpen }) => {
                             Products
                         </Link>
                         <Link
-                            to="/update/category"
+                            to="/update/clients&orders"
                             className="block py-2 pl-12 pr-4 hover:bg-gray-700 rounded-lg"
                         >
-                            Category
+                            Clients & Orders
                         </Link>
                     </div>
                 </div>
@@ -173,6 +178,23 @@ const NavBar = ({ isOpen, setIsOpen }) => {
                     {isOpen && <span>Login/Sign Up</span>}
                 </Link>
             </nav>
+
+            {/* Style custom du scroll */}
+            <style jsx>{`
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 8px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: #1f2937; /* gris foncé = bg-gray-800 */
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background-color: #6b7280; /* gris clair */
+                    border-radius: 9999px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background-color: #9ca3af; /* un peu plus clair au hover */
+                }
+            `}</style>
         </div>
     );
 };

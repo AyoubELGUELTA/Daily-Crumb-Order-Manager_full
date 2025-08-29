@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import CardList from "../../components/products/CardList";
-import NavBar from "../../components/navigation/NavBar";
+import NavBar from '../../components/navigation/NavBar';
 
 const UpdateProducts = () => {
     const [isNavOpen, setIsNavOpen] = useState(false);

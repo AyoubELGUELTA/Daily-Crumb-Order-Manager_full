@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 
 const VerifyEmail = ({ onVerificationSuccess }) => {
+
     const navigate = useNavigate();
 
     const [isLoading, setIsLoading] = useState(false);

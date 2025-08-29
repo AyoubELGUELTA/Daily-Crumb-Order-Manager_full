@@ -6,6 +6,9 @@ import VerifyEmail from './pages/AuthRelatedPages/VerifyEmail';
 import HomeCooking from './pages/HomeCooking';
 import AddProducts from './pages/AddAndCreate/AddProducts';
 import UpdateProducts from './pages/UpdateAndManage/UpdateProducts';
+import AddClients from './pages/AddAndCreate/AddClients';
+import CreateOrders from './pages/AddAndCreate/CreateOrders'
+import ManageClients from './pages/UpdateAndManage/ManageClients'
 
 
 function App() {
@@ -21,6 +24,11 @@ function App() {
         <Route path="/homeCooking" element={<HomeCooking />} />
         <Route path="/add/products" element={<AddProducts />} />
         <Route path="/update/products" element={<UpdateProducts />} />
+        <Route path="/add/clients" element={<AddClients />} />
+        <Route path="/update/clients&orders" element={<ManageClients />} />
+
+        <Route path="/add/orders" element={<CreateOrders />} />
+
         <Route path="*" element={<Navigate to="/homeCooking" />} />
 
       </Routes>
