@@ -38,7 +38,6 @@ exports.get_client = async (req, res, next) => {
     if (name && name.trim() !== '') {
         whereClause.name = {
             contains: name,
-            mode: 'insensitive' // This makes the search case-insensitive
 
         }
     };
@@ -46,13 +45,12 @@ exports.get_client = async (req, res, next) => {
     if (email && email.trim() !== '') {
         whereClause.email = {
             contains: email,
-            mode: 'insensitive' // This makes the search case-insensitive
 
         }
     }
     try {
         const clients = await prisma.client.findMany({
-            where: { whereClause },
+            where: whereClause,
             select: {
                 id: true,
                 email: true,
