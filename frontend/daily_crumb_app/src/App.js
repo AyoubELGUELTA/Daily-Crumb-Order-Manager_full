@@ -26,6 +26,8 @@ function App() {
         <Route path="/update/products" element={<UpdateProducts />} />
         <Route path="/add/clients" element={<AddClients />} />
         <Route path="/update/clients&orders" element={<ManageClients />} />
+        <Route path="/add/orders" element={<CreateOrders />} />
+
 
         <Route path="/add/orders" element={<CreateOrders />} />
 

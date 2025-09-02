@@ -61,6 +61,16 @@ exports.get_orders = async (req, res, next) => {
                     return res.status(404).json({ error: "Order not found for id requested." })
                 }
 
+                let totalPrice = 0;
+
+                if (singleOrder.orderItems) {
+                    totalPrice = singleOrder.orderItems.reduce((acc, item) => {
+                        return acc + item.quantity * item.product.price;
+                    }, 0);
+                }
+
+                console.log("Prix total de la commande :", totalPrice);
+
                 const singleResponse =
                 {
                     order:
@@ -70,12 +80,14 @@ exports.get_orders = async (req, res, next) => {
                         deliveringDate: JavaDateToStringDate(singleOrder.deliveringDate),
                         paidAt: JavaDateToStringDate(singleOrder.paidAt),
                         status: singleOrder.status,
+                        productsQuantity: quantity,
+                        totalPrice: totalPrice,
                         client: {
                             id: singleOrder.client?.id,
                             email: singleOrder.client?.email,
                             name: singleOrder.client?.name
                         },
-                        product: singleOrder.orderItems.map((item) => ({
+                        products: singleOrder.orderItems.map((item) => ({
                             productId: item.product?.id,
                             productName: item.product?.name,
                             productPrice: item.product?.price,
@@ -210,6 +222,8 @@ exports.get_orders = async (req, res, next) => {
             }
         });
 
+
+
         const response = {
             totalOrders: orders.length,
             orders:
@@ -252,15 +266,26 @@ exports.get_orders = async (req, res, next) => {
 exports.initialize_order = async (req, res, next) => {
     try {
 
-        const parsedClientId = parseInt(req.body.clientId)
+        const parsedClientId = parseInt(req.body.clientId);
+        const clientEmail = req.body.clientEmail;
         const dateToDeliver = req.body.deliveringDate;
 
-        if (isNaN(parsedClientId)) {
+
+        let whereClause = {};
+        if (parsedClientId && isNaN(parsedClientId)) {
             return res.status(400).json({ error: "Invalid client ID. Must be a valid integer." });
         }
 
+        if (clientEmail) {
+            whereClause.email = clientEmail;
+        }
+
+        if (parsedClientId) {
+            whereClause.id = parsedClientId;
+        }
+
         const clientExists = await prisma.client.findUnique({
-            where: { id: parsedClientId }
+            where: whereClause
         });
         if (!clientExists) {
             return res.status(404).json({ error: `Client with ID ${parsedClientId} not found.` });
@@ -276,7 +301,7 @@ exports.initialize_order = async (req, res, next) => {
 
         const order = await prisma.order.create({
             data: {
-                clientId: parsedClientId,
+                clientId: clientExists.id,
                 deliveringDate: stringDateToJavaDate(dateToDeliver)
             }
         });

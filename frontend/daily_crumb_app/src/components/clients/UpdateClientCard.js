@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ClientOrdersView from '../orders/ClientOrdersView';
 
 const UpdateClientCard = ({
     clientId,
@@ -10,7 +11,7 @@ const UpdateClientCard = ({
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isBeingHovered, setIsBeingHovered] = useState(false);
-
+    const [isOrderview, setIsOrderView] = useState(false);
 
 
     const toggleIsEditing = () => {
@@ -84,7 +85,9 @@ const UpdateClientCard = ({
                         </svg>
                     </button>
 
-                    <button className="p-2 bg-indigo-500 text-white rounded-full shadow hover:bg-indigo-600 transition">
+                    <button
+                        onClick={setIsOrderView(true)}
+                        className="p-2 bg-indigo-500 text-white rounded-full shadow hover:bg-indigo-600 transition">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
@@ -102,7 +105,12 @@ const UpdateClientCard = ({
                     </button>
                 </div>
             )}
+            {isOrderview ? <div> <ClientOrdersView clientId={clientId} /> </div> :
+                null
+            }
         </div>
+
+
 
     );
 };
