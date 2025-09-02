@@ -67,6 +67,7 @@ exports.get_client = async (req, res, next) => {
             total: clients.length,
             clients:
                 clients.map(client => ({
+                    id: client.id,
                     email: client.email,
                     name: client.name,
                     createdAt: client.createdAt,

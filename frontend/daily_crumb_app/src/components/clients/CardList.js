@@ -90,7 +90,7 @@ const CardList = () => {
                 }
             )
 
-
+            console.log(clientId);
             if (!response.ok) {
                 const errorData = await response.json();
 
