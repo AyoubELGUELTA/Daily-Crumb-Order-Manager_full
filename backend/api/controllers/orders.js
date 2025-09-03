@@ -511,6 +511,41 @@ exports.update_item_order = async (req, res, next) => {
     }
 };
 
+exports.delete_order = async (req, res, next) => {
+    const orderId = parseInt(req.params.orderId);
+
+    try {
+        if (isNaN(orderId)) {
+            return res.status(400).json({ message: 'Invalid order ID. Must be a number.' });
+        }
+
+        const existingOrder = await prisma.order.findUnique({
+            where: { id: orderId }
+        });
+
+        if (!existingOrder) {
+            return res.status(404).json({ message: `Order with ID ${orderIdrderId} not found.` });
+        }
+
+
+        const orderToDelete = prisma.order.delete({
+            where: {
+                id: orderId
+            }
+        })
+
+        res.status(204).send()
+    }
+
+    catch (error) {
+
+        res.status(500).json({ message: error.message })
+    }
+
+
+}
+
+
 
 exports.delete_item_order = async (req, res, next) => {
 
@@ -520,7 +555,7 @@ exports.delete_item_order = async (req, res, next) => {
 
         const orderId = parseInt(req.params.orderId);
 
-        if (isNaN(parsedOrderId)) {
+        if (isNaN(orderId)) {
             return res.status(400).json({ message: 'Invalid order ID. Must be a number.' });
         }
         if (isNaN(productId)) {

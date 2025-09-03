@@ -201,6 +201,10 @@ const CardList = () => {
                         clientCreatedDate={client.createdAt}
                         onDelete={handleDelete}
                         onGeneralChange={getClients}
+                        error={error}
+                        setError={setError}
+                        isLoading={isLoading}
+                        setIsLoading={setIsLoading}
                     />
                 ))
             ) : (

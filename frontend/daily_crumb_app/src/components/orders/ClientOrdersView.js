@@ -1,10 +1,19 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import OrderCard from './OrderCard';
 
-const ClientOrdersView = ({ clientId }) => {
+const ClientOrdersView = ({
+    clientId,
+    error,
+    setError,
+    isLoading,
+    setIsLoading
+
+}) => {
     const [needRefresh, setNeedRefresh] = useState(true);
 
     const [orders, setOrders] = useState([]);
+
+
 
     const fetchClientOrders = async (clientId) => {
         setIsLoading(true);
@@ -38,6 +47,42 @@ const ClientOrdersView = ({ clientId }) => {
         }
     };
 
+
+
+    const deleteOrderHandler = async (orderId) => {
+
+        const previousOrders = orders;
+
+        setOrders(prev => prev.filter(o => o.id !== orderId));
+
+
+        try {
+            const response = await fetch(`/orders/${orderId}`,
+                {
+                    method: 'DELETE'
+                }
+            )
+
+
+            if (!response.ok) {
+                const errorData = await response.json();
+
+                throw new Error(errorData.message || "Error occured.");
+            }
+
+
+            alert("Order successfully deleted.");
+
+        }
+        catch (error) {
+            setOrders(previousOrders);
+            setError(`Error: ${error.message}`)
+
+        }
+
+    }
+
+
     useEffect(() => {
         if (needRefresh) {
             fetchClientOrders(clientId);
@@ -59,36 +104,18 @@ const ClientOrdersView = ({ clientId }) => {
     
                 /> */}
 
-            {isLoading && (
-                <div className="fixed inset-0 flex items-center justify-center z-[90]">
-                    <div className="fixed inset-0 bg-white/50 backdrop-blur-sm"></div>
-                    <p className="text-center text-blue-500 mb-4 z-[100]"></p>
-                    <span className='loading loading-infinity loading-xl z-[100]'></span>
-                </div>
-            )}
-            {error && (
 
-                <div onClick={handleOverlayClick}
-                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-                >
-                    <div className="bg-white p-8 rounded-lg shadow-xl text-center">
-
-                        <p className="text-xl font-bold mb-4">{error}</p>
-                    </div>
-
-                </div>
-
-            )}
 
 
             {orders.length > 0 ? (
                 orders.map(order => (
                     <OrderCard
+                        clientId={clientId}
                         orderId={order.id}
                         deliveringDate={order.deliveringDate}
                         status={order.status}
                         paidAt={order.email}
-
+                        onDelete={deleteOrderHandler}
                     />
                 ))
             ) : (

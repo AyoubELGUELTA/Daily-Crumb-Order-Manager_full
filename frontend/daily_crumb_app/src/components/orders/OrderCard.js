@@ -6,11 +6,20 @@ const statusColors = {
     SHIPPED: "bg-blue-200 text-blue-800",
     DELIVERED: "bg-green-200 text-green-800",
 };
-const OrderCard = ({ orderId, deliveringDate, status, paidAt }) => {
+const OrderCard = ({
+    clientId,
+    orderId,
+    deliveringDate,
+    status,
+    paidAt,
+    onDelete,
+    error,
+    setError,
+    isLoading,
+    setIsLoading }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isBeingHovered, setIsBeingHovered] = useState(false);
-    const [error, setError] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+
 
     const [products, setProducts] = useState([]);
     const [needOrderRefresh, setNeedOrdereRefresh] = useState(false);
@@ -33,9 +42,6 @@ const OrderCard = ({ orderId, deliveringDate, status, paidAt }) => {
 
     };
 
-    const openClientOrdersList = () => {
-        openClientOrdersList(clientId);
-    }
 
     const getAllOrderDetails = async () => {
         setIsLoading(true);
@@ -112,7 +118,8 @@ const OrderCard = ({ orderId, deliveringDate, status, paidAt }) => {
             {/* Mode édition flottant */}
             {isEditing && (
                 <div className="absolute inset-0 flex items-center justify-center gap-4 bg-white/70 rounded-xl">
-                    <button className="p-2 bg-red-500 text-white rounded-full shadow hover:bg-red-600 transition">
+                    <button onClick={deleteOrderHandler}
+                        className="p-2 bg-red-500 text-white rounded-full shadow hover:bg-red-600 transition">
                         🗑
                     </button>
                     <button className="p-2 bg-indigo-500 text-white rounded-full shadow hover:bg-indigo-600 transition">

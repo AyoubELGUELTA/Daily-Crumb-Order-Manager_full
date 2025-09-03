@@ -18,6 +18,9 @@ router.patch('/:orderId/items', authenticateToken, checkAdminEmployeeRole, Order
 
 router.delete('/:orderId/items', checkAdminEmployeeRole, OrdersControllers.delete_item_order);
 
+router.delete('/:orderId', checkAdminEmployeeRole, OrdersControllers.delete_order);
+
+
 router.get('/stats', authenticateToken, checkAdminEmployeeRole, OrdersControllers.get_stats);
 
 

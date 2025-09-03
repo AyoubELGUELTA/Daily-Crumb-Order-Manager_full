@@ -7,6 +7,10 @@ const UpdateClientCard = ({
     clientEmail,
     clientCreatedDate,
     onDelete,
+    error,
+    setError,
+    isLoading,
+    setIsLoading
 
 }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -24,9 +28,7 @@ const UpdateClientCard = ({
 
     };
 
-    const openClientOrdersList = () => {
-        openClientOrdersList(clientId);
-    }
+
 
     const defaultClientImage = "https://www.pphfoundation.ca/wp-content/uploads/2018/05/default-avatar.png"
     const defaultAltText = "defaultProfilePicture"
@@ -36,6 +38,7 @@ const UpdateClientCard = ({
             onMouseLeave={() => {
                 setIsBeingHovered(false);
                 setIsEditing(false);
+
             }}
             className={`relative w-[17rem] rounded-lg cursor-pointer transition-all duration-500 
     ${isBeingHovered ? "scale-110 shadow-xl shadow-black/50 -translate-y-1.5" : ""} 
@@ -86,7 +89,7 @@ const UpdateClientCard = ({
                     </button>
 
                     <button
-                        onClick={setIsOrderView(true)}
+                        onClick={() => setIsOrderView(true)}
                         className="p-2 bg-indigo-500 text-white rounded-full shadow hover:bg-indigo-600 transition">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
