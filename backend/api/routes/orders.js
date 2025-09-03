@@ -16,9 +16,9 @@ router.post('/:orderId/items', authenticateToken, checkAdminEmployeeRole, Orders
 
 router.patch('/:orderId/items', authenticateToken, checkAdminEmployeeRole, OrdersControllers.update_item_order);
 
-router.delete('/:orderId/items', checkAdminEmployeeRole, OrdersControllers.delete_item_order);
+router.delete('/:orderId/items', authenticateToken, checkAdminEmployeeRole, OrdersControllers.delete_item_order);
 
-router.delete('/:orderId', checkAdminEmployeeRole, OrdersControllers.delete_order);
+router.delete('/:orderId', authenticateToken, checkAdminEmployeeRole, OrdersControllers.delete_order);
 
 
 router.get('/stats', authenticateToken, checkAdminEmployeeRole, OrdersControllers.get_stats);

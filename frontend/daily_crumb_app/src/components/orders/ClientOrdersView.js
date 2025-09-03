@@ -25,7 +25,8 @@ const ClientOrdersView = ({
             params.append("clientId", clientId);
         }
         try {
-            const res = await fetch(`/orders${params.toString()}`,
+            console.log(params.toString());
+            const res = await fetch(`/orders?${params.toString()}`,
                 {
                     method: 'GET',
                     headers: {
@@ -88,44 +89,32 @@ const ClientOrdersView = ({
             fetchClientOrders(clientId);
             setNeedRefresh(false);
         }
-    }, [needRefresh, setNeedRefresh, clientId])
+    }, [needRefresh, clientId])
 
 
     return (
-
-
-        <div className="flex flex-wrap gap-4">
+        <div className="w-full">
             <h2 className="text-3xl font-bold mb-6 text-center">Orders managing</h2>
 
-            {/* <SearchBar
-                    onSearchChange={handleSearchInput}
-                    needFilterRefresh={needFilterRefresh}
-                    setNeedFilterRefresh={setNeedFilterRefresh}
-    
-                /> */}
-
-
-
-
             {orders.length > 0 ? (
-                orders.map(order => (
-                    <OrderCard
-                        clientId={clientId}
-                        orderId={order.id}
-                        deliveringDate={order.deliveringDate}
-                        status={order.status}
-                        paidAt={order.email}
-                        onDelete={deleteOrderHandler}
-                    />
-                ))
+                <div className="flex flex-col gap-4">
+                    {orders.map(order => (
+                        <OrderCard
+                            key={order.id}
+                            clientId={clientId}
+                            orderId={order.id}
+                            deliveringDate={order.deliveringDate}
+                            status={order.status}
+                            paidAt={order.paidAt}
+                            onDelete={deleteOrderHandler}
+                        />
+                    ))}
+                </div>
             ) : (
-                <p>This client has no order yet.</p>
+                <p className="text-center text-gray-600">This client has no order yet.</p>
             )}
-
-
         </div>
-
     );
-};
+}
 
 export default ClientOrdersView;
